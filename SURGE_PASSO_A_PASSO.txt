@@ -1,0 +1,21 @@
+PASSO A PASSO — PUBLICAR O FRONTEND NO SURGE
+
+1. Instale o Surge:
+   npm install --global surge
+
+2. Entre na pasta do projeto frontend:
+   cd btc-spot-monitor-surge
+
+3. Certifique-se de que `data/app-config.json` aponta para sua URL da Vercel.
+
+4. Publique:
+   surge .
+
+5. Escolha o domínio solicitado pelo Surge.
+   Exemplo:
+   btc-spot-monitor.surge.sh
+
+6. Para atualizar o site depois:
+   - edite os arquivos
+   - rode novamente:
+     surge .
