@@ -72,3 +72,21 @@ Funções serverless:
 - Removido o campo inválido `runtime` do `vercel.json`.
 - Adicionado `engines.node: 20.x` no `package.json`.
 - Mantido `maxDuration` nas funções da pasta `api/`.
+
+## Atualização diária automática
+
+Esta versão usa um snapshot diário consolidado:
+
+- Endpoint principal: `/api/snapshot`
+- Endpoint manual de teste: `/api/update-daily`
+- Cron configurado em `vercel.json`: `0 11 * * *` UTC
+- Cache Vercel CDN: 24 horas + stale-while-revalidate
+
+O frontend consulta primeiro `/api/snapshot`. Se o snapshot falhar, ele tenta usar as APIs individuais como fallback.
+
+Para validar após publicar na Vercel, abra:
+
+```txt
+https://SEU-PROJETO.vercel.app/api/snapshot
+https://SEU-PROJETO.vercel.app/api/update-daily
+```

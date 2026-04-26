@@ -1,0 +1,35 @@
+BTC Spot Monitor — atualização diária
+
+Implementado nesta versão:
+
+1. Novo endpoint /api/snapshot
+   - Consolida BTC price, fluxos ETF, companhias públicas e cotações Finnhub.
+   - Retorna um único JSON diário para o frontend.
+   - Usa cache CDN da Vercel: s-maxage=86400 e stale-while-revalidate=604800.
+
+2. Novo endpoint /api/update-daily
+   - Endpoint manual para testar/disparar atualização.
+   - A rotina principal para cron usa /api/snapshot.
+
+3. Vercel Cron em vercel.json
+   - Agenda: 0 11 * * * UTC.
+   - Equivale a aproximadamente 08:00 no horário de Brasília/Campo Grande quando UTC-3.
+   - Caminho agendado: /api/snapshot.
+
+4. Frontend atualizado
+   - Agora lê primeiro /api/snapshot.
+   - Se o snapshot falhar, usa as APIs individuais como fallback.
+   - Status lateral mostra: Snapshot diário + data/hora + falhas parciais.
+   - Refresh automático por reload foi substituído por atualização diária via Vercel Cron.
+
+5. APIs ajustadas
+   - /api/farside-btc com parsing mais robusto para tabela da Farside.
+   - /api/public-companies com parsing mais tolerante para BitcoinTreasuries.
+   - As APIs também usam cache diário.
+
+Atenção:
+- Para preços e quotes, FINNHUB_API_KEY precisa estar configurada nas variáveis de ambiente da Vercel.
+- O cron da Vercel roda em produção.
+- Para testar, acesse:
+  https://SEU-PROJETO.vercel.app/api/snapshot
+  https://SEU-PROJETO.vercel.app/api/update-daily
