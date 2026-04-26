@@ -1,0 +1,68 @@
+[
+  {
+    "ticker": "IBIT",
+    "issuer": "BlackRock",
+    "label": "iShares Bitcoin Trust",
+    "source": "Farside / Finnhub / iShares"
+  },
+  {
+    "ticker": "FBTC",
+    "issuer": "Fidelity",
+    "label": "Fidelity Wise Origin Bitcoin Fund",
+    "source": "Farside / Finnhub / Fidelity"
+  },
+  {
+    "ticker": "BITB",
+    "issuer": "Bitwise",
+    "label": "Bitwise Bitcoin ETF",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "ARKB",
+    "issuer": "ARK 21Shares",
+    "label": "ARK 21Shares Bitcoin ETF",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "BTCO",
+    "issuer": "Invesco Galaxy",
+    "label": "Invesco Galaxy Bitcoin ETF",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "EZBC",
+    "issuer": "Franklin Templeton",
+    "label": "Franklin Bitcoin ETF",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "HODL",
+    "issuer": "VanEck",
+    "label": "VanEck Bitcoin Trust",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "BTCW",
+    "issuer": "WisdomTree",
+    "label": "WisdomTree Bitcoin Fund",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "BRRR",
+    "issuer": "Valkyrie",
+    "label": "Valkyrie Bitcoin Fund",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "GBTC",
+    "issuer": "Grayscale",
+    "label": "Grayscale Bitcoin Trust",
+    "source": "Farside / Finnhub"
+  },
+  {
+    "ticker": "BTC",
+    "issuer": "Grayscale",
+    "label": "Grayscale Bitcoin Mini Trust",
+    "source": "Farside / Finnhub"
+  }
+]

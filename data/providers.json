@@ -1,0 +1,24 @@
+{
+  "providers": [
+    {
+      "name": "Farside",
+      "purpose": "Fluxo diário por ETF spot de BTC",
+      "endpoint": "/api/farside-btc"
+    },
+    {
+      "name": "Finnhub",
+      "purpose": "Quotes, perfis e ETF holdings",
+      "endpoint": "/api/finnhub-batch"
+    },
+    {
+      "name": "BitcoinTreasuries",
+      "purpose": "Universo de companhias abertas com BTC",
+      "endpoint": "/api/public-companies"
+    },
+    {
+      "name": "CoinGecko",
+      "purpose": "Preço spot do BTC",
+      "endpoint": "/api/btc-price"
+    }
+  ]
+}

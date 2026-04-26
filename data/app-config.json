@@ -1,0 +1,8 @@
+{
+  "appName": "BTC Spot Monitor",
+  "apiBaseUrl": "https://SEU-PROJETO-VERCEL.vercel.app",
+  "refreshMs": 300000,
+  "timezone": "America/Campo_Grande",
+  "currency": "USD",
+  "notes": "Edite apiBaseUrl após publicar as funções na Vercel. Se você hospedar o frontend e backend no mesmo domínio, deixe vazio."
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "ticker": "MSTR",
+    "company": "Strategy",
+    "bucket": "Treasury company",
+    "officialSource": "https://www.strategy.com/investor-relations"
+  },
+  {
+    "ticker": "MARA",
+    "company": "MARA Holdings",
+    "bucket": "Miner / Treasury",
+    "officialSource": "https://ir.mara.com/"
+  },
+  {
+    "ticker": "TSLA",
+    "company": "Tesla",
+    "bucket": "Corporate treasury",
+    "officialSource": "https://ir.tesla.com/"
+  },
+  {
+    "ticker": "COIN",
+    "company": "Coinbase",
+    "bucket": "Exchange",
+    "officialSource": "https://investor.coinbase.com/"
+  },
+  {
+    "ticker": "HUT",
+    "company": "Hut 8",
+    "bucket": "Miner",
+    "officialSource": "https://hut8.com/investors"
+  },
+  {
+    "ticker": "RIOT",
+    "company": "Riot Platforms",
+    "bucket": "Miner",
+    "officialSource": "https://investors.riotplatforms.com/"
+  },
+  {
+    "ticker": "CLSK",
+    "company": "CleanSpark",
+    "bucket": "Miner",
+    "officialSource": "https://investors.cleanspark.com/"
+  },
+  {
+    "ticker": "SQ",
+    "company": "Block",
+    "bucket": "Corporate treasury / fintech",
+    "officialSource": "https://investors.block.xyz/"
+  }
+]
