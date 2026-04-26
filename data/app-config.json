@@ -1,6 +1,6 @@
 {
   "appName": "BTC Spot Monitor",
-  "apiBaseUrl": "https://monitor1-sooty.vercel.app",
+  "apiBaseUrl": "apiBaseUrl": "",
   "refreshMs": 300000,
   "timezone": "America/Campo_Grande",
   "currency": "USD",
