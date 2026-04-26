@@ -18,6 +18,12 @@ function fmtMoney(v,c='USD',d=0){
   if(Number.isNaN(n)) return String(v);
   return new Intl.NumberFormat('pt-BR',{style:'currency',currency:c,minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
 }
+function fmtBtc(v,d=0){
+  if(v===null||v===undefined||v==='') return 'N/D';
+  const n=Number(v);
+  if(Number.isNaN(n)) return String(v);
+  return `${n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})} BTC`;
+}
 function fmtPercent(v,d=2){
   if(v===null||v===undefined||v==='') return 'N/D';
   const n=Number(v);
@@ -138,8 +144,9 @@ async function renderOverview(config){
   setHtml('public-companies-delta',prev?deltaLabel(companies?.summary?.publicCompanies,prev?.payload?.publicCompanies,0):'<span class="delta neu">Sem base comparativa local</span>');
   setText('top-public-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
   setHtml('top-public-btc-delta','<span class="delta neu">Fonte estrutural diária</span>');
-  const topFlows=(flows?.rows||[]).filter(r=>r.ticker||r.issuer).slice(0,8).map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${fmtMoney(r.flow,'USD',1)}</td><td>${fmtMoney(r.aum||null,'USD',0)}</td></tr>`).join('');
-  setHtml('top-flows-body',topFlows||'<tr><td colspan="4">Sem dados da fonte diária</td></tr>');
+  const preferredEtfs=['IBIT','FBTC','BITB','ARKB','BTCO','EZBC','BRRR','HODL','BTCW','GBTC','BTC'];
+  const topFlows=preferredEtfs.map(t=>((flows?.rows||[]).find(r=>r.ticker===t))).filter(Boolean).map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${fmtMoney(r.flow,'USD',1)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
+  setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
   const topCompanies=(companies?.rows||[]).slice(0,8).map(r=>`<tr><td>${r.company||'N/D'}</td><td>${r.ticker||'N/D'}</td><td>${fmtNumber(r.btcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td></tr>`).join('');
   setHtml('top-companies-body',topCompanies||'<tr><td colspan="4">Sem dados da fonte diária</td></tr>');
   const watch=(batch?.quotes||[]).map(q=>`<div class="list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div><strong>${q.symbol}</strong> <span class="small">— ${q.name||'N/D'}</span></div><div class="small">${q.type||'Watchlist'}</div></div><div style="text-align:right"><div><strong>${fmtMoney(q.price,'USD',2)}</strong></div><div class="small">${fmtPercent(q.changePct,2)}</div></div></div></div>`).join('');

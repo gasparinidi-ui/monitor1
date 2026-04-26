@@ -25,6 +25,22 @@ function statusFrom(results){
   return {status:'partial',label:'Parcial',failed};
 }
 
+function enrichEtfFlows(flows, btc){
+  const btcPrice=Number(btc?.price||0) || null;
+  if(!flows || !Array.isArray(flows.rows) || !btcPrice) return flows;
+  const rows=flows.rows.map(r=>{
+    const cum=Number(r.cumulativeFlowUsdM);
+    const prev=Number(r.previousCumulativeFlowUsdM);
+    return {
+      ...r,
+      btcSpotLast:Number.isFinite(cum) ? (cum*1000000)/btcPrice : null,
+      btcSpotPrevious:Number.isFinite(prev) ? (prev*1000000)/btcPrice : null,
+      btcSpotMethod:'estimated_from_cumulative_usd_flows_and_btc_price'
+    };
+  });
+  return {...flows,rows};
+}
+
 function mergeCompanies(companies, btc){
   const btcPrice=Number(btc?.price||0) || null;
   const rows=(companies?.rows||[]).map(r=>({
@@ -53,6 +69,7 @@ export default async function handler(req,res){
   const map=Object.fromEntries(entries.map(e=>[e.name,e]));
   const status=statusFrom(entries);
   const btc=map.btc.data||{ok:false,price:null,source:'CoinGecko'};
+  const flows=enrichEtfFlows(map.flows.data||{ok:false,summary:{latestDate:null,latestTotalFlow:null},rows:[],source:'Farside'},btc);
   const companies=mergeCompanies(map.companies.data||{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[],source:'BitcoinTreasuries'},btc);
   const payload={
     ok: status.status!=='failed',
@@ -63,13 +80,13 @@ export default async function handler(req,res){
     cache:{policy:'Vercel CDN',seconds:86400,staleWhileRevalidate:604800},
     sources:{
       btc:btc?.source||'CoinGecko',
-      flows:map.flows.data?.source||'Farside',
+      flows:flows?.source||'Farside',
       companies:companies?.source||'BitcoinTreasuries',
       quotes:'Finnhub'
     },
     data:{
       btc,
-      flows:map.flows.data||{ok:false,summary:{latestDate:null,latestTotalFlow:null},rows:[],source:'Farside'},
+      flows,
       companies,
       overviewQuotes:map.overviewQuotes.data||{ok:false,quotes:[]},
       etfQuotes:map.etfQuotes.data||{ok:false,quotes:[]},

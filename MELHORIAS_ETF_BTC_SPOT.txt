@@ -1,0 +1,21 @@
+Melhorias aplicadas nesta versão
+
+1. Removido o quadro "Watchlist rápida" da página inicial.
+2. O espaço foi usado para ampliar o quadro "Fluxo ETF spot".
+3. O quadro agora mostra:
+   - Ticker
+   - Emissor
+   - Fluxo do último dia
+   - Data da última divulgação
+   - BTC spot da última divulgação
+   - Data da penúltima divulgação
+   - BTC spot da penúltima divulgação
+4. O parser da Farside foi corrigido para usar a data mais recente da tabela, e não a primeira linha encontrada.
+5. O snapshot diário enriquece os dados de ETFs com estimativa de BTC spot por fundo.
+6. Método usado para BTC spot por ETF nesta versão:
+   - fluxo líquido acumulado em USD da Farside dividido pelo preço BTC do snapshot diário.
+   - campo técnico: btcSpotMethod = estimated_from_cumulative_usd_flows_and_btc_price.
+7. O Vercel Cron continua atualizando o snapshot uma vez ao dia.
+
+Observação importante:
+A quantidade de BTC spot por fundo desta versão é uma estimativa operacional baseada em fluxo líquido acumulado e preço BTC. Para substituir por quantidade oficial divulgada por cada emissor, será necessário integrar as páginas/CSVs oficiais de holdings de BlackRock, Fidelity, Bitwise, ARK/21Shares, Invesco, Franklin, VanEck, WisdomTree, Valkyrie e Grayscale.
