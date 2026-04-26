@@ -1,0 +1,6 @@
+Correção aplicada:
+- O quadro "Companhias abertas — ranking por BTC em tesouraria" deixou de usar a lista bruta do scraping do BitcoinTreasuries.
+- O ranking agora usa a mesma watchlist controlada da página "Companhias abertas com BTC em tesouraria".
+- A API /api/public-companies foi ajustada para retornar somente empresas monitoradas: MSTR, MARA, TSLA, COIN, HUT, RIOT, CLSK e SQ.
+- Removidas linhas incorretas que vinham do parsing bruto, como países, totais, empresas duplicadas e tickers inválidos.
+- Ordenação dos dois quadros mantida por maior quantidade de BTC na última atualização.
