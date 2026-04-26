@@ -65,6 +65,26 @@ function sumThrough(rows,headerMap,ticker,endIdx){
   }
   return has ? total : null;
 }
+function findPreviousDifferentCumulative(rows,headerMap,ticker,latestIdx,latestCum){
+  for(let i=latestIdx-1;i>=0;i--){
+    const cum=sumThrough(rows,headerMap,ticker,i);
+    if(cum==null) continue;
+    if(latestCum==null || Math.abs(Number(cum)-Number(latestCum))>1e-9){
+      return {date:rows[i]?.[0]||null,cumulative:cum,flow:toNumber(rows[i]?.[headerMap[ticker]])};
+    }
+  }
+  return {date:null,cumulative:null,flow:null};
+}
+function findPreviousDifferentTotal(rows,headerMap,latestIdx,latestTotal){
+  for(let i=latestIdx-1;i>=0;i--){
+    const v=toNumber(rows[i]?.[headerMap.TOTAL]);
+    if(v==null) continue;
+    if(latestTotal==null || Math.abs(Number(v)-Number(latestTotal))>1e-9){
+      return {date:rows[i]?.[0]||null,total:v};
+    }
+  }
+  return {date:null,total:null};
+}
 export default async function handler(req,res){
   setCors(res);
   if(req.method==='OPTIONS') return res.status(204).end();
@@ -84,31 +104,31 @@ export default async function handler(req,res){
     const headerMap=mapHeader(header);
     const dataRows=allRows.filter(r=>isDateCell(r[0])).sort((a,b)=>parseFarsideDate(a[0])-parseFarsideDate(b[0]));
     const latestIdx=dataRows.length-1;
-    const previousIdx=dataRows.length-2;
     const latest=dataRows[latestIdx]||[];
-    const previous=dataRows[previousIdx]||[];
     const date=latest[0]||null;
-    const previousDate=previous[0]||null;
+    const latestTotalFlow=toNumber(latest[headerMap.TOTAL]);
+    const prevTotal=findPreviousDifferentTotal(dataRows,headerMap,latestIdx,latestTotalFlow);
+    const previousDate=prevTotal.date;
     const rows=KNOWN.map(t=>{
       const cumulativeFlowUsdM=sumThrough(dataRows,headerMap,t,latestIdx);
-      const previousCumulativeFlowUsdM=previousIdx>=0?sumThrough(dataRows,headerMap,t,previousIdx):null;
+      const prev=findPreviousDifferentCumulative(dataRows,headerMap,t,latestIdx,cumulativeFlowUsdM);
       return {
         ticker:t,
         issuer:ETF_MAP[t],
         date,
-        previousDate,
+        previousDate:prev.date,
         flow:toNumber(latest[headerMap[t]]),
-        previousFlow:toNumber(previous[headerMap[t]]),
+        previousFlow:prev.flow,
         cumulativeFlowUsdM,
-        previousCumulativeFlowUsdM,
+        previousCumulativeFlowUsdM:prev.cumulative,
         btcSpotLast:null,
         btcSpotPrevious:null,
         btcSpotMethod:'estimated_from_cumulative_usd_flows',
+        previousSelection:'last_prior_disclosure_with_different_value',
         aum:null
       };
     });
-    const latestTotalFlow=toNumber(latest[headerMap.TOTAL]);
-    const previousTotalFlow=toNumber(previous[headerMap.TOTAL]);
+    const previousTotalFlow=prevTotal.total;
     res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
     return res.status(200).json({ok:true,summary:{latestDate:date,previousDate,latestTotalFlow,previousTotalFlow},rows,source:'Farside'});
   }catch(error){

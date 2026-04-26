@@ -1,0 +1,15 @@
+Correção aplicada em 26/04/2026
+
+Regra nova:
+- Quando a data/valor da última divulgação comparativa for igual à data/valor atual, a comparação não usa essa linha.
+- O sistema procura a última divulgação anterior que tenha valor diferente.
+- Aplicado ao quadro de ETFs e ao ranking de companhias abertas.
+
+ETFs:
+- api/farside-btc.js agora busca, para cada ticker, a última linha anterior da Farside cujo acumulado seja diferente do acumulado atual.
+- A penúltima divulgação deixa de ser simplesmente a linha imediatamente anterior quando ela não altera a quantidade.
+
+Companhias abertas:
+- assets/app.js mantém histórico local dos snapshots no navegador.
+- Para cada companhia, a comparação usa a última base histórica com BTC diferente da base atual.
+- Se não existir base anterior diferente, exibe N/D em vez de repetir a mesma data/quantidade.
