@@ -1,0 +1,29 @@
+Correções aplicadas em 26/04/2026
+
+1) Corrigido data/app-config.json
+- O JSON estava inválido: "apiBaseUrl": "apiBaseUrl": "".
+- Novo valor: "apiBaseUrl": "https://monitor1-sooty.vercel.app".
+- Assim o frontend pode funcionar no Surge apontando para as APIs da Vercel.
+
+2) Melhorado assets/app.js
+- Tratamento robusto para falhas parciais de API.
+- Uma API com problema não derruba a página inteira.
+- Avisos aparecem no painel quando uma fonte falha.
+- apiBaseUrl agora aceita URL com ou sem /api no final.
+- fetch de JSON usa no-store para evitar cache ruim de configuração.
+
+3) Melhoradas APIs da pasta /api
+- Adicionado CORS para permitir frontend no Surge chamando Vercel.
+- Adicionado suporte a OPTIONS.
+- Erros de provedores externos agora retornam HTTP 200 com ok:false, sem quebrar a página.
+- Finnhub sem FINNHUB_API_KEY retorna mensagem clara.
+- Coingecko, Farside e BitcoinTreasuries retornam fallback estruturado.
+
+4) Melhorado CSS
+- Adicionados estilos para avisos e erros visuais.
+
+Checklist de publicação
+- Subir este projeto completo na Vercel.
+- Configurar FINNHUB_API_KEY em Vercel > Project Settings > Environment Variables.
+- Se publicar o frontend no Surge, manter apiBaseUrl apontando para https://monitor1-sooty.vercel.app.
+- Se publicar tudo somente na Vercel, apiBaseUrl pode ficar vazio ou manter a própria URL da Vercel.
