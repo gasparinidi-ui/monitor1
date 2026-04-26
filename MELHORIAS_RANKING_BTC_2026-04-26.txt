@@ -1,0 +1,24 @@
+Melhorias aplicadas em 26/04/2026
+
+1. Quadro ETF
+- Removida a visão baseada em preço/cotação no quadro principal.
+- Coluna substituída por VARIAÇÃO BTC.
+- Variação BTC = BTC spot última divulgação - BTC spot penúltima divulgação.
+- Valores positivos ficam verdes; valores negativos ficam vermelhos; sem base fica N/D em cinza.
+- Ranking ordenado pela maior quantidade de BTC spot na última atualização.
+
+2. Quadro Companhias abertas
+- Reestruturado para seguir o mesmo padrão do quadro ETF:
+  Ticker | Companhia | Variação BTC | Última divulgação | BTC spot última | Penúltima divulgação | BTC spot penúltima.
+- Ranking ordenado pela maior quantidade de BTC na última atualização.
+- A penúltima base das companhias usa histórico local do navegador quando disponível, pois a fonte BitcoinTreasuries normalmente entrega o estado corrente e não uma série histórica diária completa.
+
+3. API BitcoinTreasuries
+- Parser ajustado para reduzir erro de leitura de ranking/país/ticker como BTC.
+- Watchlist principal garantida no retorno mesmo quando a estrutura HTML da fonte muda.
+
+4. Visual
+- Adicionada classe de cor para variação BTC:
+  verde = aumento
+  vermelho = queda
+  cinza = sem base comparativa

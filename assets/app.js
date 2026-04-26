@@ -36,6 +36,27 @@ function fmtDateTime(v,tz=DEFAULT_TZ){
   if(Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleString('pt-BR',{timeZone:tz});
 }
+
+function numOrNull(v){
+  if(v===null||v===undefined||v==='') return null;
+  const n=Number(v);
+  return Number.isFinite(n)?n:null;
+}
+function btcChangeHtml(current, previous){
+  const c=numOrNull(current), pr=numOrNull(previous);
+  if(c===null || pr===null) return '<span class="btc-change neu">N/D</span>';
+  const d=c-pr;
+  const cls=d>0?'pos':d<0?'neg':'neu';
+  const prefix=d>0?'+':'';
+  return '<span class="btc-change '+cls+'">'+prefix+fmtBtc(d,0)+'</span>';
+}
+function sortByCurrentBtcDesc(rows, field='btcSpotLast'){
+  return [...(rows||[])].sort((a,b)=>(numOrNull(b?.[field])??-Infinity)-(numOrNull(a?.[field])??-Infinity));
+}
+function todayLabel(tz=DEFAULT_TZ){
+  return new Date().toLocaleDateString('pt-BR',{timeZone:tz});
+}
+
 function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function setHtml(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;}
 function saveSnapshot(key,payload){try{localStorage.setItem(key,JSON.stringify({ts:Date.now(),payload}));}catch(e){console.warn('snapshot',e);}}
@@ -144,11 +165,25 @@ async function renderOverview(config){
   setHtml('public-companies-delta',prev?deltaLabel(companies?.summary?.publicCompanies,prev?.payload?.publicCompanies,0):'<span class="delta neu">Sem base comparativa local</span>');
   setText('top-public-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
   setHtml('top-public-btc-delta','<span class="delta neu">Fonte estrutural diária</span>');
-  const preferredEtfs=['IBIT','FBTC','BITB','ARKB','BTCO','EZBC','BRRR','HODL','BTCW','GBTC','BTC'];
-  const topFlows=preferredEtfs.map(t=>((flows?.rows||[]).find(r=>r.ticker===t))).filter(Boolean).map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${fmtMoney(r.flow,'USD',1)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
+  const topFlows=sortByCurrentBtcDesc((flows?.rows||[]).filter(r=>r?.ticker && r?.btcSpotLast!=null),'btcSpotLast')
+    .slice(0,12)
+    .map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
   setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
-  const topCompanies=(companies?.rows||[]).slice(0,8).map(r=>`<tr><td>${r.company||'N/D'}</td><td>${r.ticker||'N/D'}</td><td>${fmtNumber(r.btcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td></tr>`).join('');
-  setHtml('top-companies-body',topCompanies||'<tr><td colspan="4">Sem dados da fonte diária</td></tr>');
+
+  const companyHistoryKey='btc-spot-monitor-company-ranking-history';
+  const previousCompanySnapshot=readSnapshot(companyHistoryKey);
+  const previousCompanyMap=new Map(((previousCompanySnapshot?.payload?.rows)||[]).map(x=>[(x.ticker||x.company||'').toUpperCase(),x]));
+  const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,12);
+  const topCompanies=companyRows.map(r=>{
+    const key=(r.ticker||r.company||'').toUpperCase();
+    const prev=previousCompanyMap.get(key)||{};
+    const lastDate=r.lastDisclosureDate||r.date||companies?.summary?.latestDate||todayLabel(config.timezone||DEFAULT_TZ);
+    const previousDate=r.previousDisclosureDate||prev.lastDisclosureDate||prev.date||previousCompanySnapshot?.payload?.date||'N/D';
+    const previousBtc=r.previousBtcHeld ?? prev.btcHeld ?? null;
+    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,previousBtc)}</td><td>${lastDate}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${previousDate}</td><td>${fmtBtc(previousBtc,0)}</td></tr>`;
+  }).join('');
+  setHtml('top-companies-body',topCompanies||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
+  saveSnapshot(companyHistoryKey,{date:todayLabel(config.timezone||DEFAULT_TZ),rows:companyRows.map(r=>({ticker:r.ticker,company:r.company,btcHeld:r.btcHeld,lastDisclosureDate:r.lastDisclosureDate||r.date||todayLabel(config.timezone||DEFAULT_TZ)}))});
   const watch=(batch?.quotes||[]).map(q=>`<div class="list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div><strong>${q.symbol}</strong> <span class="small">— ${q.name||'N/D'}</span></div><div class="small">${q.type||'Watchlist'}</div></div><div style="text-align:right"><div><strong>${fmtMoney(q.price,'USD',2)}</strong></div><div class="small">${fmtPercent(q.changePct,2)}</div></div></div></div>`).join('');
   setHtml('watchlist-cards',watch||'<div class="notice">Sem dados de cotação. Verifique FINNHUB_API_KEY na Vercel.</div>');
 }
