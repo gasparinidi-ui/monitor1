@@ -182,6 +182,7 @@ async function init(){
     if(page==='etfs') await renderEtfs(config);
     if(page==='corporates') await renderCorporates(config);
     if(page==='market') await renderMarket(config);
+    if(page==='onchain') await renderOnchain(config);
     if(page==='settings') await renderSettings(config);
   }catch(err){ showFatal(err); }
   setText('refresh-ms','diário via Vercel Cron');
@@ -209,7 +210,7 @@ async function renderOverview(config){
     .map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
   setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
 
-  const companyHistoryKey='btc-spot-monitor-company-ranking-history';
+  const companyHistoryKey='btc-spot-monitor-company-ranking-history-v2';
   const companyHistory=readHistory(companyHistoryKey);
   const companyWatchlist=await loadJson('./data/company_watchlist.json');
   const matchedCompanyRows=companyWatchlist.map(item=>{
@@ -261,15 +262,23 @@ async function renderEtfs(config){
 async function renderCorporates(config){
   const snap=await getDailySnapshot(config);
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[]});
-  const quotes=snap?.data?.companyQuotes || await safeProvider(config,'/api/finnhub-batch?kind=companies',{ok:false,quotes:[]});
   const list=await loadJson('./data/company_watchlist.json');
-  const mapQuote=new Map((quotes?.quotes||[]).map(x=>[x.symbol,x]));
-  const rows=list.map(item=>{
-    const q=mapQuote.get(item.ticker)||{};
+  const rows=sortByCurrentBtcDesc(list.map(item=>{
     const live=(companies?.rows||[]).find(x=>(x.ticker||'').toUpperCase()===item.ticker.toUpperCase() || (x.company||'').toLowerCase().includes((item.company||'').toLowerCase().split(' ')[0]))||{};
-    return `<tr><td>${item.company}</td><td>${item.ticker}</td><td>${item.bucket}</td><td>${fmtMoney(q.price,'USD',2)}</td><td>${fmtPercent(q.changePct,2)}</td><td>${fmtNumber(live.btcHeld||null,0)}</td><td>${fmtMoney(live.valueUsd||null,'USD',0)}</td><td><a href="${item.officialSource}" target="_blank" rel="noreferrer">IR</a></td></tr>`;
+    return {
+      ticker:item.ticker,
+      company:item.company,
+      officialSource:item.officialSource,
+      btcHeld:live.btcHeld ?? null,
+      valueUsd:live.valueUsd ?? null,
+      lastDisclosureDate:live.lastDisclosureDate || live.date || companies?.summary?.latestDate || 'Base diária',
+      previousDisclosureDate:live.previousDisclosureDate || null,
+      previousBtcHeld:live.previousBtcHeld ?? null
+    };
+  }).filter(r=>r.btcHeld!=null),'btcHeld').map(r=>{
+    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td><td><a href="${r.officialSource}" target="_blank" rel="noreferrer">IR</a></td></tr>`;
   }).join('');
-  setHtml('corp-table-body',rows||'<tr><td colspan="8">Sem dados</td></tr>');
+  setHtml('corp-table-body',rows||'<tr><td colspan="9">Sem dados</td></tr>');
   setText('corp-summary-count',companies?.summary?.publicCompanies!=null?fmtNumber(companies.summary.publicCompanies,0):'N/D');
   setText('corp-summary-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
 }
@@ -295,3 +304,18 @@ async function renderSettings(config){
   setText('watch-corp-count',String(corps.length));
 }
 window.addEventListener('DOMContentLoaded',init);
+async function renderOnchain(config){
+  const snap=await getDailySnapshot(config);
+  const data=snap?.data?.onchainDormant || await safeProvider(config,'/api/onchain-dormant',{ok:false,rows:[],source:'CoinMetrics Community API'});
+  const rows=data?.rows||[];
+  setText('onchain-source',data?.source||'CoinMetrics Community API');
+  setText('onchain-date',data?.latestDate?new Date(data.latestDate).toLocaleDateString('pt-BR',{timeZone:config.timezone||DEFAULT_TZ}):'N/D');
+  setText('onchain-supply',data?.currentSupply!=null?fmtBtc(data.currentSupply,0):'N/D');
+  setText('onchain-max-years',data?.maxYearsAvailable?`${data.maxYearsAvailable} anos`:'N/D');
+  const maxDormant = rows.length ? rows.reduce((m,r)=>numOrNull(r.dormantSupply)>numOrNull(m.dormantSupply||-Infinity)?r:m, rows[0]) : null;
+  setText('onchain-largest-bucket',maxDormant?`${maxDormant.years}+ anos: ${fmtBtc(maxDormant.dormantSupply,0)}`:'N/D');
+  const body=rows.map(r=>`<tr><td>${r.bucket||'N/D'}</td><td>${fmtBtc(r.dormantSupply,0)}</td><td>${fmtPercent(r.dormantPct,2)}</td><td>${fmtBtc(r.activeSupply,0)}</td><td>${fmtBtc(r.currentSupply,0)}</td><td>${r.metric||'N/D'}</td></tr>`).join('');
+  setHtml('onchain-dormant-body',body||'<tr><td colspan="6">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
+  const cards=rows.map(r=>`<div class="list-item"><div class="kv"><div><strong>${r.years}+ anos</strong><div class="small">não movimentados</div></div><div style="text-align:right"><strong>${fmtBtc(r.dormantSupply,0)}</strong><div class="small">${fmtPercent(r.dormantPct,2)} da oferta</div></div></div></div>`).join('');
+  setHtml('onchain-cards',cards||'<div class="notice">Sem dados.</div>');
+}

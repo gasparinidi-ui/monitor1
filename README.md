@@ -90,3 +90,8 @@ Para validar após publicar na Vercel, abra:
 https://SEU-PROJETO.vercel.app/api/snapshot
 https://SEU-PROJETO.vercel.app/api/update-daily
 ```
+
+
+## Histórico diário de companhias
+
+Este pacote inclui histórico persistente para companhias abertas com BTC em tesouraria. Para funcionar de forma global no Vercel, configure `KV_REST_API_URL` e `KV_REST_API_TOKEN` no projeto. Sem KV, o painel continua funcionando, mas a comparação histórica de companhias depende de histórico local/fallback.

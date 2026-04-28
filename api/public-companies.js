@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { applyCompanyHistory } from './_company-history.js';
 function setCors(res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
@@ -90,8 +91,9 @@ export default async function handler(req,res){
       const valueUsd=live.valueUsd ?? (btcPrice && btcHeld ? btcHeld*btcPrice : null);
       return {company:CURATED[t].company,ticker:t,btcHeld,valueUsd,lastDisclosureDate:live.lastDisclosureDate||summary.latestDate};
     }).sort((a,b)=>(Number(b.btcHeld)||0)-(Number(a.btcHeld)||0));
+    const hist=await applyCompanyHistory(rows, summary.latestDate || new Date().toISOString().slice(0,10));
     res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
-    return res.status(200).json({ok:true,summary,rows,source:'BitcoinTreasuries + watchlist controlada'});
+    return res.status(200).json({ok:true,summary,rows:hist.rows,historyMeta:hist.historyMeta,source:'BitcoinTreasuries + watchlist controlada + histórico persistente'});
   }catch(error){
     return res.status(200).json({ok:false,error:error.message,summary:{publicCompanies:null,totalBtc:null,latestDate:null},rows:[],source:'BitcoinTreasuries'});
   }

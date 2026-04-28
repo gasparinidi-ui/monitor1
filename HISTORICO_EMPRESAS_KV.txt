@@ -1,0 +1,42 @@
+HISTÓRICO DIÁRIO DE COMPANHIAS COM BTC
+
+Implementação incluída neste pacote:
+
+1) Novo helper:
+   api/_company-history.js
+
+2) A API /api/snapshot agora:
+   - lê as companhias atuais;
+   - grava um histórico diário por ticker;
+   - procura a última base anterior com valor DIFERENTE;
+   - retorna previousDisclosureDate e previousBtcHeld para cada companhia.
+
+3) A API /api/public-companies também retorna:
+   - lastDisclosureDate;
+   - previousDisclosureDate;
+   - previousBtcHeld;
+   - historyMeta.
+
+4) O frontend:
+   - usa a variação BTC real quando houver histórico;
+   - não usa data anterior igual à atual;
+   - não usa valor anterior igual ao atual;
+   - ordena o ranking pela maior quantidade de BTC atual.
+
+IMPORTANTE SOBRE PERSISTÊNCIA
+
+Para o histórico funcionar globalmente no Vercel, configure um armazenamento KV/Redis com estas variáveis no projeto:
+
+KV_REST_API_URL
+KV_REST_API_TOKEN
+
+Sem essas variáveis, o site continua funcionando, mas o histórico persistente entre dias no servidor não é salvo. Nesse caso, a comparação só aparece quando houver histórico local do navegador ou quando a fonte já trouxer dado anterior.
+
+Depois de configurar o KV:
+1. Faça redeploy no Vercel.
+2. Acesse /api/snapshot uma vez ou aguarde o Cron diário.
+3. No primeiro dia haverá apenas base atual.
+4. A comparação real começa quando existir uma base anterior diferente.
+
+Regra aplicada:
+Se a última divulgação anterior tiver a mesma data ou o mesmo valor da atual, ela é ignorada. O sistema procura a divulgação anterior mais recente que possua valor diferente.

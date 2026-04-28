@@ -19,6 +19,11 @@
       "name": "CoinGecko",
       "purpose": "Preço spot do BTC",
       "endpoint": "/api/btc-price"
+    },
+    {
+      "name": "CoinMetrics",
+      "purpose": "Oferta ativa e oferta parada por idade on-chain",
+      "endpoint": "/api/onchain-dormant"
     }
   ]
 }

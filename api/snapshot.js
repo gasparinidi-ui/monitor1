@@ -1,3 +1,5 @@
+import { applyCompanyHistory } from './_company-history.js';
+
 function setCors(res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
@@ -60,7 +62,8 @@ export default async function handler(req,res){
     companies:`${base}/api/public-companies`,
     overviewQuotes:`${base}/api/finnhub-batch?kind=overview`,
     etfQuotes:`${base}/api/finnhub-batch?kind=etfs`,
-    companyQuotes:`${base}/api/finnhub-batch?kind=companies`
+    companyQuotes:`${base}/api/finnhub-batch?kind=companies`,
+    onchainDormant:`${base}/api/onchain-dormant`
   };
   const entries=await Promise.all(Object.entries(endpoints).map(async([name,url])=>{
     try{return {name,ok:true,data:await getJson(url)}}
@@ -70,7 +73,10 @@ export default async function handler(req,res){
   const status=statusFrom(entries);
   const btc=map.btc.data||{ok:false,price:null,source:'CoinGecko'};
   const flows=enrichEtfFlows(map.flows.data||{ok:false,summary:{latestDate:null,latestTotalFlow:null},rows:[],source:'Farside'},btc);
-  const companies=mergeCompanies(map.companies.data||{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[],source:'BitcoinTreasuries'},btc);
+  let companies=mergeCompanies(map.companies.data||{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[],source:'BitcoinTreasuries'},btc);
+  const companyDate=companies?.summary?.latestDate || new Date().toISOString().slice(0,10);
+  const companyHistoryResult=await applyCompanyHistory(companies.rows||[], companyDate);
+  companies={...companies,rows:companyHistoryResult.rows,historyMeta:companyHistoryResult.historyMeta};
   const payload={
     ok: status.status!=='failed',
     snapshotType:'daily-cached',
@@ -82,7 +88,9 @@ export default async function handler(req,res){
       btc:btc?.source||'CoinGecko',
       flows:flows?.source||'Farside',
       companies:companies?.source||'BitcoinTreasuries',
-      quotes:'Finnhub'
+      companyHistory:companies?.historyMeta?.provider||'memory-only',
+      quotes:'Finnhub',
+      onchainDormant:'CoinMetrics Community API'
     },
     data:{
       btc,
@@ -90,7 +98,8 @@ export default async function handler(req,res){
       companies,
       overviewQuotes:map.overviewQuotes.data||{ok:false,quotes:[]},
       etfQuotes:map.etfQuotes.data||{ok:false,quotes:[]},
-      companyQuotes:map.companyQuotes.data||{ok:false,quotes:[]}
+      companyQuotes:map.companyQuotes.data||{ok:false,quotes:[]},
+      onchainDormant:map.onchainDormant.data||{ok:false,rows:[],source:'CoinMetrics Community API'}
     },
     errors:entries.filter(e=>!e.ok).map(e=>({source:e.name,error:e.error}))
   };
