@@ -26,6 +26,18 @@ function cleanNum(input){
   return Number.isNaN(n)?null:n*mult;
 }
 function normalizeName(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+
+function acceptLiveBtc(ticker, value){
+  const n=Number(value);
+  if(!Number.isFinite(n) || n<=0) return null;
+  const base=Number(CURATED[ticker]?.btcHeld||0);
+  if(!base) return n;
+  // Rejeita leituras obviamente erradas do scraping bruto, como valores de ranking/market cap
+  // capturados como se fossem BTC. Mantém atualizações reais próximas da base controlada.
+  if(n < base*0.25 || n > base*3) return null;
+  return n;
+}
+
 function extractRow(cells){
   const clean=cells.map(x=>String(x||'').replace(/\s+/g,' ').trim()).filter(Boolean);
   if(clean.length<3) return null;
@@ -87,8 +99,9 @@ export default async function handler(req,res){
     }
     const rows=WATCHLIST.map(t=>{
       const live=byTicker.get(t)||{};
-      const btcHeld=live.btcHeld ?? CURATED[t].btcHeld;
-      const valueUsd=live.valueUsd ?? (btcPrice && btcHeld ? btcHeld*btcPrice : null);
+      const acceptedLiveBtc=acceptLiveBtc(t, live.btcHeld);
+      const btcHeld=acceptedLiveBtc ?? CURATED[t].btcHeld;
+      const valueUsd=(acceptedLiveBtc!=null ? live.valueUsd : null) ?? (btcPrice && btcHeld ? btcHeld*btcPrice : null);
       return {company:CURATED[t].company,ticker:t,btcHeld,valueUsd,lastDisclosureDate:live.lastDisclosureDate||summary.latestDate};
     }).sort((a,b)=>(Number(b.btcHeld)||0)-(Number(a.btcHeld)||0));
     const hist=await applyCompanyHistory(rows, summary.latestDate || new Date().toISOString().slice(0,10));

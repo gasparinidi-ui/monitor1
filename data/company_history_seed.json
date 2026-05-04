@@ -1,0 +1,16 @@
+[
+  {
+    "date": "2026-04-26",
+    "source": "baseline_manual_watchlist",
+    "rows": [
+      {"ticker":"MSTR","company":"Strategy","btcHeld":815061,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"MARA","company":"MARA Holdings","btcHeld":38689,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"RIOT","company":"Riot Platforms","btcHeld":15680,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"COIN","company":"Coinbase","btcHeld":15389,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"HUT","company":"Hut 8","btcHeld":13696,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"CLSK","company":"CleanSpark","btcHeld":13363,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"TSLA","company":"Tesla","btcHeld":11509,"lastDisclosureDate":"2026-04-26"},
+      {"ticker":"SQ","company":"Block","btcHeld":8883,"lastDisclosureDate":"2026-04-26"}
+    ]
+  }
+]

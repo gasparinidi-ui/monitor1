@@ -1,0 +1,7 @@
+Correção aplicada no ranking de Companhias Abertas:
+
+1. O quadro agora usa a mesma base controlada da página de companhias, evitando dados brutos inválidos do scraping.
+2. Foi adicionada uma base histórica inicial em data/company_history_seed.json.
+3. Quando o Vercel KV/Upstash não estiver configurado, o sistema ainda consegue comparar a última posição atual contra a base inicial.
+4. Leituras absurdas do scraping bruto são rejeitadas por validação de faixa contra a base controlada. Ex.: SQ/Block não pode virar 1.000.000 BTC por erro de parsing.
+5. Quando o KV for configurado, o cron diário continuará acumulando histórico real e substituirá gradualmente a base inicial.

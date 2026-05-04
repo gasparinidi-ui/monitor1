@@ -1,5 +1,6 @@
 const HISTORY_KEY='btc_spot_monitor_company_history_v1';
 const MAX_HISTORY_DAYS=90;
+const SEED_PATH=new URL('../data/company_history_seed.json', import.meta.url);
 
 function todayIso(){ return new Date().toISOString().slice(0,10); }
 function num(v){ const n=Number(v); return Number.isFinite(n)?n:null; }
@@ -24,6 +25,17 @@ function normaliseHistory(raw){
     .sort((a,b)=>String(a.date).localeCompare(String(b.date)))
     .slice(-MAX_HISTORY_DAYS);
 }
+async function loadSeedHistory(){
+  try{
+    const fs=await import('fs/promises');
+    const txt=await fs.readFile(SEED_PATH,'utf8');
+    return normaliseHistory(JSON.parse(txt));
+  }catch(e){
+    console.warn('Company history seed load skipped:', e.message);
+    return [];
+  }
+}
+
 async function kvRequest(command){
   const url=process.env.KV_REST_API_URL;
   const token=process.env.KV_REST_API_TOKEN;
@@ -38,19 +50,25 @@ async function kvRequest(command){
   return j?.result ?? null;
 }
 export async function loadCompanyHistory(){
+  const seed=await loadSeedHistory();
   try{
     const raw=await kvRequest(['GET',HISTORY_KEY]);
     if(raw){
       const parsed=typeof raw==='string'?JSON.parse(raw):raw;
-      return normaliseHistory(parsed);
+      const kvHist=normaliseHistory(parsed);
+      const merged=[...seed,...kvHist];
+      const byDate=new Map();
+      for(const item of merged){ byDate.set(String(item.date), item); }
+      return normaliseHistory([...byDate.values()]);
     }
   }catch(e){ console.warn('Company history KV load fallback:', e.message); }
-  return [];
+  return seed;
 }
 export async function saveCompanyHistory(history){
   const clean=normaliseHistory(history);
   try{
     const result=await kvRequest(['SET',HISTORY_KEY,JSON.stringify(clean)]);
+    if(result===null) return {persisted:false,provider:'seed-file / memory-only',warning:'KV_REST_API_URL/KV_REST_API_TOKEN não configurados'};
     return {persisted:!!result,provider:'Vercel KV / Upstash Redis'};
   }catch(e){
     console.warn('Company history KV save skipped:', e.message);
