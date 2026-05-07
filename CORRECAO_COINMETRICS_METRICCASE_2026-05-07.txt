@@ -1,0 +1,1 @@
+Correção: métricas CoinMetrics ajustadas para SplyAct1Yr/SplyAct2Yr/SplyAct3Yr/SplyAct4Yr/SplyAct5Yr, com fallback lowercase e ignore_forbidden_errors/ignore_unsupported_errors.

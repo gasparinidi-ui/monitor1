@@ -8,13 +8,11 @@ const CM_BASE = 'https://community-api.coinmetrics.io/v4/timeseries/asset-metric
 
 const METRIC_SETS = [
   [
-    { years: 1, metric: 'SplyAct1yr', label: '≥ 1 ano sem movimentação' },
-    { years: 2, metric: 'SplyAct2yr', label: '≥ 2 anos sem movimentação' },
-    { years: 3, metric: 'SplyAct3yr', label: '≥ 3 anos sem movimentação' },
-    { years: 4, metric: 'SplyAct4yr', label: '≥ 4 anos sem movimentação' },
-    { years: 5, metric: 'SplyAct5yr', label: '≥ 5 anos sem movimentação' },
-    { years: 7, metric: 'SplyAct7yr', label: '≥ 7 anos sem movimentação' },
-    { years: 10, metric: 'SplyAct10yr', label: '≥ 10 anos sem movimentação' }
+    { years: 1, metric: 'SplyAct1Yr', label: '≥ 1 ano sem movimentação' },
+    { years: 2, metric: 'SplyAct2Yr', label: '≥ 2 anos sem movimentação' },
+    { years: 3, metric: 'SplyAct3Yr', label: '≥ 3 anos sem movimentação' },
+    { years: 4, metric: 'SplyAct4Yr', label: '≥ 4 anos sem movimentação' },
+    { years: 5, metric: 'SplyAct5Yr', label: '≥ 5 anos sem movimentação' }
   ],
   [
     { years: 1, metric: 'SplyAct1yr', label: '≥ 1 ano sem movimentação' },
@@ -22,13 +20,6 @@ const METRIC_SETS = [
     { years: 3, metric: 'SplyAct3yr', label: '≥ 3 anos sem movimentação' },
     { years: 4, metric: 'SplyAct4yr', label: '≥ 4 anos sem movimentação' },
     { years: 5, metric: 'SplyAct5yr', label: '≥ 5 anos sem movimentação' }
-  ],
-  [
-    { years: 1, metric: 'SplyAct1Yr', label: '≥ 1 ano sem movimentação' },
-    { years: 2, metric: 'SplyAct2Yr', label: '≥ 2 anos sem movimentação' },
-    { years: 3, metric: 'SplyAct3Yr', label: '≥ 3 anos sem movimentação' },
-    { years: 4, metric: 'SplyAct4Yr', label: '≥ 4 anos sem movimentação' },
-    { years: 5, metric: 'SplyAct5Yr', label: '≥ 5 anos sem movimentação' }
   ]
 ];
 
@@ -73,6 +64,8 @@ async function fetchCoinMetricsCommunity(){
     // Correct way to request the most recent observation: paging_from=end + sort=time.
     url.searchParams.set('paging_from','end');
     url.searchParams.set('sort','time');
+    url.searchParams.set('ignore_forbidden_errors','true');
+    url.searchParams.set('ignore_unsupported_errors','true');
 
     try{
       const data=await fetchJson(url);
