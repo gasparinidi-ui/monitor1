@@ -1,15 +1,8 @@
-Correção aplicada na página On-chain / moedas paradas
+ARQUIVO SUPERADO PELA CORREÇÃO DE 07/05/2026
 
-Problema:
-- O endpoint /api/onchain-dormant dependia apenas da CoinMetrics e falhava quando as métricas SplyAct não estavam disponíveis sem chave/API.
+A versão atual não usa Bitbo e não exige BITBO_API_KEY nem COINMETRICS_API_KEY.
+A fonte on-chain definitiva é a CoinMetrics Community API gratuita:
+https://community-api.coinmetrics.io/v4
 
-Correção:
-- Adicionado provedor principal Bitbo HODL Waves (/api/v1/hodl-waves, latest=true).
-- Adicionado fallback CoinMetrics com tentativas de nomes de métricas SplyAct1Yr/SplyAct1yr etc.
-- Adicionado fallback de oferta circulante via CoinMetrics SplyCur e blockchain.info totalbc.
-- A página agora aceita faixas 1+, 2+, 3+, 5+, 7+ e 10+ anos quando Bitbo estiver disponível.
-- Se a fonte exigir autenticação, configurar BITBO_API_KEY ou COINMETRICS_API_KEY no Vercel.
-
-Observação:
-- HODL Waves informa percentual da oferta por idade desde a última movimentação on-chain.
-- BTC não movimentado = percentual da faixa x oferta atual.
+Endpoint interno:
+/api/onchain-dormant

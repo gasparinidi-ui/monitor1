@@ -21,8 +21,8 @@
       "endpoint": "/api/btc-price"
     },
     {
-      "name": "Bitbo / CoinMetrics",
-      "purpose": "Oferta ativa e oferta parada por idade on-chain",
+      "name": "CoinMetrics Community API",
+      "purpose": "Oferta ativa e oferta parada por idade on-chain, sem chave paga",
       "endpoint": "/api/onchain-dormant"
     }
   ]

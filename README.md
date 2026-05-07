@@ -95,3 +95,8 @@ https://SEU-PROJETO.vercel.app/api/update-daily
 ## Histórico diário de companhias
 
 Este pacote inclui histórico persistente para companhias abertas com BTC em tesouraria. Para funcionar de forma global no Vercel, configure `KV_REST_API_URL` e `KV_REST_API_TOKEN` no projeto. Sem KV, o painel continua funcionando, mas a comparação histórica de companhias depende de histórico local/fallback.
+
+
+## On-chain gratuito sem Bitbo
+
+A página `onchain.html` usa somente a CoinMetrics Community API gratuita (`https://community-api.coinmetrics.io/v4`). Não é necessário configurar `BITBO_API_KEY` nem `COINMETRICS_API_KEY`. Para cotações de ETFs e ações, mantenha apenas `FINNHUB_API_KEY` no Vercel.

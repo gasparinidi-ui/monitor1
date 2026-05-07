@@ -1,0 +1,31 @@
+CORREÇÃO DEFINITIVA — ON-CHAIN GRATUITO SEM API PAGA
+
+Alteração aplicada:
+- Removida dependência da Bitbo.
+- Removida dependência de BITBO_API_KEY.
+- Removida dependência de COINMETRICS_API_KEY paga.
+- Endpoint /api/onchain-dormant agora usa somente:
+  https://community-api.coinmetrics.io/v4/timeseries/asset-metrics
+
+Métricas usadas:
+- SplyCur
+- SplyAct1yr
+- SplyAct2yr
+- SplyAct3yr
+- SplyAct4yr
+- SplyAct5yr
+- tentativa adicional para SplyAct7yr e SplyAct10yr quando disponíveis.
+
+Cálculo:
+- BTC não movimentado há N anos = SplyCur - SplyActNyr
+
+Deploy:
+- Basta subir o projeto no GitHub e fazer redeploy no Vercel.
+- Não configure Bitbo.
+- Não configure CoinMetrics paga.
+- Para cotações de ETFs/ações, FINNHUB_API_KEY continua necessária.
+
+Teste após deploy:
+- /api/onchain-dormant
+- /api/snapshot
+- onchain.html

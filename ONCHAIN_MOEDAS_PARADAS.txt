@@ -1,30 +1,24 @@
-NOVA PÁGINA: ON-CHAIN / MOEDAS PARADAS
+ON-CHAIN / MOEDAS PARADAS
 
-Objetivo:
-- Exibir a quantidade de BTC que não se movimentou há 1, 2, 3, 4 e 5 anos.
+Fonte atual:
+- CoinMetrics Community API gratuita
+- Sem chave paga
+- Sem Bitbo
 
-Fonte:
-- CoinMetrics Community API.
-- Endpoint do projeto: /api/onchain-dormant
+Endpoint externo:
+https://community-api.coinmetrics.io/v4/timeseries/asset-metrics
 
-Metodologia:
-- A CoinMetrics fornece a oferta atual (SplyCur) e a oferta ativa em janelas móveis:
-  SplyAct1Yr, SplyAct2Yr, SplyAct3Yr, SplyAct4Yr e SplyAct5Yr.
-- O projeto calcula:
-  BTC não movimentado há N anos = SplyCur - SplyActNYr.
+Endpoint interno:
+/api/onchain-dormant
 
-Observação importante:
-- As faixas são cumulativas, não exclusivas.
-- Exemplo: BTC parado há 5+ anos também está incluído nos grupos 4+, 3+, 2+ e 1+ anos.
+Métricas:
+- SplyCur
+- SplyAct1yr
+- SplyAct2yr
+- SplyAct3yr
+- SplyAct4yr
+- SplyAct5yr
+- tentativa de SplyAct7yr e SplyAct10yr se disponíveis na Community API
 
-Arquivos adicionados/alterados:
-- onchain.html
-- api/onchain-dormant.js
-- api/snapshot.js
-- assets/app.js
-- data/providers.json
-- Menus de todas as páginas HTML
-
-Atualização:
-- A página entra no snapshot diário já existente via Vercel Cron.
-- Se desejar usar chave da CoinMetrics no futuro, configure COINMETRICS_API_KEY na Vercel.
+Cálculo:
+BTC não movimentado há N anos = SplyCur - SplyActNyr
