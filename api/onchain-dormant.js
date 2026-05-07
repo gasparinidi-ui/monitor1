@@ -69,7 +69,10 @@ async function fetchCoinMetricsCommunity(){
     url.searchParams.set('metrics',metrics);
     url.searchParams.set('frequency','1d');
     url.searchParams.set('page_size','1');
-    url.searchParams.set('sort','time_desc');
+    // CoinMetrics API v4 does not support descending sort values like time_desc.
+    // Correct way to request the most recent observation: paging_from=end + sort=time.
+    url.searchParams.set('paging_from','end');
+    url.searchParams.set('sort','time');
 
     try{
       const data=await fetchJson(url);

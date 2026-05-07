@@ -1,0 +1,17 @@
+CORREÇÃO COINMETRICS COMMUNITY API - 2026-05-07
+
+Problema identificado:
+/api/onchain-dormant retornava erro HTTP 400 porque o parâmetro sort=time_desc não é aceito pela CoinMetrics API v4.
+
+Correção aplicada:
+- Removido sort=time_desc.
+- Adicionado paging_from=end.
+- Mantido sort=time.
+
+URL esperada pela API:
+https://community-api.coinmetrics.io/v4/timeseries/asset-metrics?assets=btc&metrics=SplyCur,SplyAct1yr,SplyAct2yr,SplyAct3yr,SplyAct4yr,SplyAct5yr&frequency=1d&page_size=1&paging_from=end&sort=time
+
+Resultado esperado:
+- /api/onchain-dormant deve retornar ok:true.
+- /api/update-daily deve atualizar o snapshot sem falha onchainDormant.
+- A página on-chain deve preencher Data da métrica, Oferta atual, Máximo disponível e tabela de moedas não movimentadas.
