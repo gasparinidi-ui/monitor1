@@ -1,16 +1,188 @@
 [
   {
-    "date": "2026-04-26",
-    "source": "baseline_manual_watchlist",
+    "date": "2026-05-08",
+    "source": "coingecko_top30_baseline",
     "rows": [
-      {"ticker":"MSTR","company":"Strategy","btcHeld":815061,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"MARA","company":"MARA Holdings","btcHeld":38689,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"RIOT","company":"Riot Platforms","btcHeld":15680,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"COIN","company":"Coinbase","btcHeld":15389,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"HUT","company":"Hut 8","btcHeld":13696,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"CLSK","company":"CleanSpark","btcHeld":13363,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"TSLA","company":"Tesla","btcHeld":11509,"lastDisclosureDate":"2026-04-26"},
-      {"ticker":"SQ","company":"Block","btcHeld":8883,"lastDisclosureDate":"2026-04-26"}
+      {
+        "ticker": "MSTR",
+        "company": "Strategy",
+        "btcHeld": 818334,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "XXI",
+        "company": "XXI",
+        "btcHeld": 43514,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "3350.T",
+        "company": "Metaplanet",
+        "btcHeld": 40177,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "MARA",
+        "company": "MARA Holdings",
+        "btcHeld": 38689,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "CEPO",
+        "company": "Bitcoin Standard Treasury Company",
+        "btcHeld": 30021,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "GLXY",
+        "company": "Galaxy Digital Holdings Ltd",
+        "btcHeld": 25723,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "BLSH",
+        "company": "Bullish",
+        "btcHeld": 23300,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "RIOT",
+        "company": "Riot Platforms",
+        "btcHeld": 15680,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "COIN",
+        "company": "Coinbase Global",
+        "btcHeld": 15389,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "ASST",
+        "company": "Strive",
+        "btcHeld": 14556,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "HUT",
+        "company": "Hut 8 Mining Corp",
+        "btcHeld": 13696,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "CLSK",
+        "company": "CleanSpark",
+        "btcHeld": 13363,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "TSLA",
+        "company": "Tesla",
+        "btcHeld": 11509,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "DJT",
+        "company": "Trump Media & Technology Group Corp.",
+        "btcHeld": 9542,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "XYZ",
+        "company": "Block",
+        "btcHeld": 8997,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "GDC",
+        "company": "GD Culture Group",
+        "btcHeld": 7500,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "ABTC",
+        "company": "American Bitcoin",
+        "btcHeld": 6235,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "NXTT",
+        "company": "Next Technology Holding",
+        "btcHeld": 5833,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "BRR",
+        "company": "ProCap BTC",
+        "btcHeld": 5457,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "NAKA",
+        "company": "Nakamoto Inc (formerly KindlyMD)",
+        "btcHeld": 5058,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "GEMI",
+        "company": "Gemini Space Station",
+        "btcHeld": 4827,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "434.HK",
+        "company": "Boyaa Interactive International Limited",
+        "btcHeld": 4091,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "OBTC3.SA",
+        "company": "OranjeBTC",
+        "btcHeld": 3727,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "ADE.DE",
+        "company": "Bitcoin Group SE",
+        "btcHeld": 3605,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "EMPD",
+        "company": "Empery Digital",
+        "btcHeld": 2989,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "ALCPB.PA",
+        "company": "Capital B",
+        "btcHeld": 2943,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "SWC.AQ",
+        "company": "The Smarter Web Company PLC",
+        "btcHeld": 2805,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "DEFI.NE",
+        "company": "DeFi Technologies",
+        "btcHeld": 2596,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "DDC",
+        "company": "DDC Enterprise Limited",
+        "btcHeld": 2383,
+        "lastDisclosureDate": "2026-05-08"
+      },
+      {
+        "ticker": "HOLO",
+        "company": "Microcloud Hologram",
+        "btcHeld": 2353,
+        "lastDisclosureDate": "2026-05-08"
+      }
     ]
   }
 ]

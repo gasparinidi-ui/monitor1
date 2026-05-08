@@ -210,38 +210,9 @@ async function renderOverview(config){
     .map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
   setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
 
-  const companyHistoryKey='btc-spot-monitor-company-ranking-history-v2';
-  const companyHistory=readHistory(companyHistoryKey);
-  const companyWatchlist=await loadJson('./data/company_watchlist.json');
-  const matchedCompanyRows=companyWatchlist.map(item=>{
-    const live=(companies?.rows||[]).find(x=>
-      (x.ticker||'').toUpperCase()===item.ticker.toUpperCase() ||
-      (x.company||'').toLowerCase().includes((item.company||'').toLowerCase().split(' ')[0])
-    )||{};
-    return {
-      ticker:item.ticker,
-      company:item.company,
-      btcHeld:live.btcHeld ?? null,
-      valueUsd:live.valueUsd ?? null,
-      lastDisclosureDate:live.lastDisclosureDate || live.date || companies?.summary?.latestDate || 'Base diária',
-      previousDisclosureDate:live.previousDisclosureDate || null,
-      previousBtcHeld:live.previousBtcHeld ?? null
-    };
-  });
-  const companyRows=sortByCurrentBtcDesc(matchedCompanyRows.filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,12);
-  const topCompanies=companyRows.map(r=>{
-    const lastDate=r.lastDisclosureDate||companies?.summary?.latestDate||todayLabel(config.timezone||DEFAULT_TZ);
-    let previousDate=r.previousDisclosureDate||null;
-    let previousBtc=r.previousBtcHeld ?? null;
-    if(!previousDate || sameDateLabel(previousDate,lastDate) || sameValue(previousBtc,r.btcHeld)){
-      const histPrev=findPreviousDifferentFromHistory(companyHistory,r,lastDate,'btcHeld');
-      previousDate=histPrev.date;
-      previousBtc=histPrev.value;
-    }
-    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,previousBtc)}</td><td>${lastDate}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${previousDate||'N/D'}</td><td>${fmtBtc(previousBtc,0)}</td></tr>`;
-  }).join('');
+  const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,12);
+  const topCompanies=companyRows.map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td></tr>`).join('');
   setHtml('top-companies-body',topCompanies||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
-  saveHistory(companyHistoryKey,{date:todayLabel(config.timezone||DEFAULT_TZ),rows:companyRows.map(r=>({ticker:r.ticker,company:r.company,btcHeld:r.btcHeld,lastDisclosureDate:r.lastDisclosureDate||todayLabel(config.timezone||DEFAULT_TZ)}))});
   const watch=(batch?.quotes||[]).map(q=>`<div class="list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div><strong>${q.symbol}</strong> <span class="small">— ${q.name||'N/D'}</span></div><div class="small">${q.type||'Watchlist'}</div></div><div style="text-align:right"><div><strong>${fmtMoney(q.price,'USD',2)}</strong></div><div class="small">${fmtPercent(q.changePct,2)}</div></div></div></div>`).join('');
   setHtml('watchlist-cards',watch||'<div class="notice">Sem dados de cotação. Verifique FINNHUB_API_KEY na Vercel.</div>');
 }
@@ -261,25 +232,14 @@ async function renderEtfs(config){
 }
 async function renderCorporates(config){
   const snap=await getDailySnapshot(config);
-  const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[]});
-  const list=await loadJson('./data/company_watchlist.json');
-  const rows=sortByCurrentBtcDesc(list.map(item=>{
-    const live=(companies?.rows||[]).find(x=>(x.ticker||'').toUpperCase()===item.ticker.toUpperCase() || (x.company||'').toLowerCase().includes((item.company||'').toLowerCase().split(' ')[0]))||{};
-    return {
-      ticker:item.ticker,
-      company:item.company,
-      officialSource:item.officialSource,
-      btcHeld:live.btcHeld ?? null,
-      valueUsd:live.valueUsd ?? null,
-      lastDisclosureDate:live.lastDisclosureDate || live.date || companies?.summary?.latestDate || 'Base diária',
-      previousDisclosureDate:live.previousDisclosureDate || null,
-      previousBtcHeld:live.previousBtcHeld ?? null
-    };
-  }).filter(r=>r.btcHeld!=null),'btcHeld').map(r=>{
-    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td><td><a href="${r.officialSource}" target="_blank" rel="noreferrer">IR</a></td></tr>`;
+  const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null,displayedCompanies:null},rows:[]});
+  const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,30);
+  const rows=companyRows.map(r=>{
+    const source=r.officialSource || companies?.summary?.sourceUrl || '#';
+    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td><td><a href="${source}" target="_blank" rel="noreferrer">Fonte</a></td></tr>`;
   }).join('');
   setHtml('corp-table-body',rows||'<tr><td colspan="9">Sem dados</td></tr>');
-  setText('corp-summary-count',companies?.summary?.publicCompanies!=null?fmtNumber(companies.summary.publicCompanies,0):'N/D');
+  setText('corp-summary-count',companyRows.length?fmtNumber(companyRows.length,0):'N/D');
   setText('corp-summary-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
 }
 async function renderMarket(config){

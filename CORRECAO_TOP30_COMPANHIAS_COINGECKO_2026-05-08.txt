@@ -1,0 +1,23 @@
+Correção aplicada em 08/05/2026
+
+Objetivo:
+- Confirmar e exibir na página corporates.html o saldo das 30 maiores companhias abertas por quantidade de BTC em tesouraria.
+
+Alterações:
+1. /api/public-companies agora usa como fonte principal a página pública da CoinGecko:
+   https://www.coingecko.com/en/treasuries/bitcoin/companies
+
+2. A API passa a retornar as Top 30 companhias por BTC, ordenadas pela maior quantidade atual.
+
+3. A data da última divulgação continua seguindo a regra definida:
+   - se a quantidade de BTC não mudou, mantém a data original da última mudança;
+   - se a quantidade muda, a data da divulgação passa a ser a data da atualização diária.
+
+4. data/company_watchlist.json foi ampliado de 8 para 30 companhias.
+
+5. data/company_history_seed.json recebeu a base inicial das Top 30 para permitir histórico e comparação futura.
+
+6. corporates.html agora mostra Top 30, não apenas a watchlist curta anterior.
+
+Observação:
+- A variação BTC depende de histórico persistente. Na primeira execução, alguns papéis podem aparecer como N/D até haver uma base anterior diferente.

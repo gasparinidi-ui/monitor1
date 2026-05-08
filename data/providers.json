@@ -11,8 +11,8 @@
       "endpoint": "/api/finnhub-batch"
     },
     {
-      "name": "BitcoinTreasuries",
-      "purpose": "Universo de companhias abertas com BTC",
+      "name": "CoinGecko Bitcoin Treasury Companies",
+      "purpose": "Top 30 companhias abertas por BTC em tesouraria + histórico interno de variação",
       "endpoint": "/api/public-companies"
     },
     {
