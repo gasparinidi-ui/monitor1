@@ -1,0 +1,12 @@
+Correção aplicada em corporates.html e index.html via API de companhias/histórico:
+
+Regra nova:
+- A data da última divulgação representa a data em que a quantidade de BTC mudou.
+- Se o snapshot diário atualizar, mas a quantidade de BTC da companhia continuar igual, a data original da última divulgação é mantida.
+- A data só muda quando houver nova quantidade de BTC.
+- A penúltima divulgação continua sendo a última base anterior com valor diferente.
+
+Exemplo:
+- MSTR tinha 815.061 BTC em 2026-04-26.
+- Se comprar 1.000 BTC em 2026-04-30, passa para 816.061 BTC e a data vira 2026-04-30.
+- Se nos dias seguintes continuar 816.061 BTC, a data permanece 2026-04-30 até nova alteração.

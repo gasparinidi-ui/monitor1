@@ -304,18 +304,80 @@ async function renderSettings(config){
   setText('watch-corp-count',String(corps.length));
 }
 window.addEventListener('DOMContentLoaded',init);
+function yyyyMmDd(value, tz=DEFAULT_TZ){
+  if(!value) return new Date().toLocaleDateString('en-CA',{timeZone:tz});
+  const d = new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value).slice(0,10);
+  return d.toLocaleDateString('en-CA',{timeZone:tz});
+}
+function ptDateFromKey(key){
+  if(!key || key==='N/D') return 'N/D';
+  const [y,m,d]=String(key).slice(0,10).split('-');
+  return y&&m&&d ? `${d}/${m}/${y}` : key;
+}
+function addDaysKey(key, delta){
+  const d=new Date(`${key}T12:00:00Z`);
+  if(Number.isNaN(d.getTime())) return 'N/D';
+  d.setUTCDate(d.getUTCDate()+delta);
+  return d.toISOString().slice(0,10);
+}
+function loadOnchainHistory(){
+  try{ return JSON.parse(localStorage.getItem('btc_spot_monitor_onchain_history_v1')||'[]'); }catch{ return []; }
+}
+function saveOnchainHistory(entry){
+  try{
+    const current=loadOnchainHistory().filter(x=>x && x.date && x.date!==entry.date);
+    current.push(entry);
+    current.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const trimmed=current.slice(-30);
+    localStorage.setItem('btc_spot_monitor_onchain_history_v1',JSON.stringify(trimmed));
+    return trimmed;
+  }catch{ return [entry]; }
+}
+function onchainEntryFromData(data, dateKey){
+  const rows=(data?.rows||[]).map(r=>({
+    years:r.years,
+    bucket:r.bucket,
+    metric:r.metric,
+    dormantSupply:r.dormantSupply,
+    dormantPct:r.dormantPct,
+    activeSupply:r.activeSupply,
+    currentSupply:r.currentSupply
+  }));
+  return {date:dateKey, latestDate:data?.latestDate||dateKey, currentSupply:data?.currentSupply??null, rows};
+}
+function findHistoryEntry(history,dateKey){
+  return (history||[]).find(x=>x?.date===dateKey) || null;
+}
+function cellOnchain(entry, years){
+  const r=(entry?.rows||[]).find(x=>Number(x.years)===Number(years));
+  if(!r) return '<strong>N/D</strong><div class="small">sem histórico</div>';
+  return `<strong>${fmtBtc(r.dormantSupply,0)}</strong><div class="small">${fmtPercent(r.dormantPct,2)} da oferta</div>`;
+}
 async function renderOnchain(config){
   const snap=await getDailySnapshot(config);
-  const data=snap?.data?.onchainDormant || await safeProvider(config,'/api/onchain-dormant',{ok:false,rows:[],source:'CoinMetrics Community API'});
+  const data=snap?.data?.onchainDormant || await safeProvider(config,'/api/onchain-dormant',{ok:false,rows:[],source:'BTCFunk HODL Waves'});
   const rows=data?.rows||[];
-  setText('onchain-source',data?.source||'CoinMetrics Community API');
+  const todayKey=yyyyMmDd(data?.latestDate || snap?.generatedAt || new Date(), config.timezone||DEFAULT_TZ);
+  const yesterdayKey=addDaysKey(todayKey,-1);
+  const beforeYesterdayKey=addDaysKey(todayKey,-2);
+  const entry=onchainEntryFromData(data,todayKey);
+  const history=saveOnchainHistory(entry);
+  const todayEntry=findHistoryEntry(history,todayKey) || entry;
+  const yesterdayEntry=findHistoryEntry(history,yesterdayKey);
+  const beforeYesterdayEntry=findHistoryEntry(history,beforeYesterdayKey);
+  setText('onchain-source',data?.source||'BTCFunk HODL Waves');
   setText('onchain-date',data?.latestDate?new Date(data.latestDate).toLocaleDateString('pt-BR',{timeZone:config.timezone||DEFAULT_TZ}):'N/D');
   setText('onchain-supply',data?.currentSupply!=null?fmtBtc(data.currentSupply,0):'N/D');
   setText('onchain-max-years',data?.maxYearsAvailable?`${data.maxYearsAvailable} anos`:'N/D');
   const maxDormant = rows.length ? rows.reduce((m,r)=>numOrNull(r.dormantSupply)>numOrNull(m.dormantSupply||-Infinity)?r:m, rows[0]) : null;
   setText('onchain-largest-bucket',maxDormant?`${maxDormant.years}+ anos: ${fmtBtc(maxDormant.dormantSupply,0)}`:'N/D');
+  setText('onchain-today-label',ptDateFromKey(todayKey));
+  setText('onchain-yesterday-label',ptDateFromKey(yesterdayKey));
+  setText('onchain-before-yesterday-label',ptDateFromKey(beforeYesterdayKey));
+  const yearsList=[...new Set(rows.map(r=>Number(r.years)).filter(Boolean))].sort((a,b)=>a-b);
+  const historyBody=yearsList.map(y=>`<tr><td><strong>${y}+ anos</strong><div class="small">não movimentados</div></td><td>${cellOnchain(todayEntry,y)}</td><td>${cellOnchain(yesterdayEntry,y)}</td><td>${cellOnchain(beforeYesterdayEntry,y)}</td></tr>`).join('');
+  setHtml('onchain-history-body',historyBody||'<tr><td colspan="4">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
   const body=rows.map(r=>`<tr><td>${r.bucket||'N/D'}</td><td>${fmtBtc(r.dormantSupply,0)}</td><td>${fmtPercent(r.dormantPct,2)}</td><td>${fmtBtc(r.activeSupply,0)}</td><td>${fmtBtc(r.currentSupply,0)}</td><td>${r.metric||'N/D'}</td></tr>`).join('');
   setHtml('onchain-dormant-body',body||'<tr><td colspan="6">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
-  const cards=rows.map(r=>`<div class="list-item"><div class="kv"><div><strong>${r.years}+ anos</strong><div class="small">não movimentados</div></div><div style="text-align:right"><strong>${fmtBtc(r.dormantSupply,0)}</strong><div class="small">${fmtPercent(r.dormantPct,2)} da oferta</div></div></div></div>`).join('');
-  setHtml('onchain-cards',cards||'<div class="notice">Sem dados.</div>');
 }

@@ -75,14 +75,37 @@ export async function saveCompanyHistory(history){
     return {persisted:false,provider:'memory-only',warning:e.message};
   }
 }
+function findLastKnownRow(history, ticker){
+  const t=String(ticker||'').toUpperCase();
+  const hist=normaliseHistory(history);
+  for(let i=hist.length-1;i>=0;i--){
+    const snap=hist[i];
+    const row=(snap.rows||[]).find(r=>String(r.ticker||'').toUpperCase()===t);
+    if(row) return {snap,row,date:row.lastDisclosureDate||snap.date};
+  }
+  return null;
+}
+function resolveCurrentDisclosureDate(history, ticker, currentValue, fallbackDate=todayIso()){
+  const cur=num(currentValue);
+  if(cur===null) return fallbackDate;
+  const last=findLastKnownRow(history,ticker);
+  // Se o valor atual é igual ao último valor conhecido, mantém a data original da divulgação.
+  // A data só muda quando há alteração efetiva na quantidade de BTC.
+  if(last && sameValue(last.row.btcHeld,cur)) return last.row.lastDisclosureDate||last.snap.date||fallbackDate;
+  return fallbackDate;
+}
 export function addCurrentToHistory(history, rows, date=todayIso()){
-  const cleanCurrent=cleanRows(rows,date);
-  if(!cleanCurrent.length) return normaliseHistory(history);
-  const filtered=normaliseHistory(history).filter(x=>String(x.date)!==String(date));
+  const baseHistory=normaliseHistory(history);
+  const cleanCurrent=cleanRows(rows,date).map(r=>({
+    ...r,
+    lastDisclosureDate:resolveCurrentDisclosureDate(baseHistory,r.ticker,r.btcHeld,date)
+  }));
+  if(!cleanCurrent.length) return baseHistory;
+  const filtered=baseHistory.filter(x=>String(x.date)!==String(date));
   filtered.push({date,rows:cleanCurrent});
   return normaliseHistory(filtered);
 }
-export function findPreviousDifferent(history, ticker, currentValue, currentDate){
+export function findPreviousDifferent(history, ticker, currentValue, currentDisclosureDate){
   const t=String(ticker||'').toUpperCase();
   const cur=num(currentValue);
   if(!t || cur===null) return null;
@@ -92,7 +115,7 @@ export function findPreviousDifferent(history, ticker, currentValue, currentDate
     const row=(snap.rows||[]).find(r=>String(r.ticker||'').toUpperCase()===t);
     if(!row) continue;
     const rowDate=row.lastDisclosureDate||snap.date;
-    if(String(rowDate)===String(currentDate)) continue;
+    if(String(rowDate)===String(currentDisclosureDate)) continue;
     if(sameValue(row.btcHeld,cur)) continue;
     return {date:rowDate,value:row.btcHeld};
   }
@@ -100,10 +123,14 @@ export function findPreviousDifferent(history, ticker, currentValue, currentDate
 }
 export async function applyCompanyHistory(rows, date=todayIso()){
   const before=await loadCompanyHistory();
-  const updated=addCurrentToHistory(before, rows, date);
+  const enrichedPreSave=(rows||[]).map(r=>({
+    ...r,
+    lastDisclosureDate:resolveCurrentDisclosureDate(before,r.ticker,r.btcHeld,date)
+  }));
+  const updated=addCurrentToHistory(before, enrichedPreSave, date);
   const persist=await saveCompanyHistory(updated);
-  const enriched=(rows||[]).map(r=>{
-    const currentDate=r.lastDisclosureDate||r.date||date;
+  const enriched=enrichedPreSave.map(r=>{
+    const currentDate=r.lastDisclosureDate||date;
     const prev=findPreviousDifferent(updated,r.ticker,r.btcHeld,currentDate);
     return {
       ...r,
