@@ -1,0 +1,28 @@
+Correção da página On-chain / moedas paradas
+Data: 2026-05-08
+
+Motivo:
+- A CoinMetrics Community API gratuita não libera as métricas SplyAct* necessárias para calcular BTC não movimentado por 1+, 2+, 3+ e 5+ anos.
+- A página foi alterada para usar BTCFunk HODL Waves, fonte pública em JSON, sem API key e sem variável de ambiente paga.
+
+Arquivo alterado:
+- api/onchain-dormant.js
+
+Nova fonte:
+- https://btcfunk.com/api/hodl
+
+Metodologia:
+- Usa HODL Waves por faixas de idade de UTXO.
+- Calcula BTC parado por limiar acumulado:
+  1+ ano = soma das faixas com idade >= 1 ano
+  2+ anos = soma das faixas com idade >= 2 anos
+  3+ anos = soma das faixas com idade >= 3 anos
+  4+ anos = soma das faixas com idade >= 4 anos
+  5+ anos = soma das faixas com idade >= 5 anos
+  7+ anos = soma das faixas com idade >= 7 anos
+  10+ anos = soma das faixas com idade >= 10 anos
+
+Após deploy:
+1) testar /api/onchain-dormant
+2) testar /api/update-daily
+3) atualizar o site com Ctrl+F5
