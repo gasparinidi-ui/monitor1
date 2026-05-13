@@ -233,12 +233,13 @@ async function renderEtfs(config){
 async function renderCorporates(config){
   const snap=await getDailySnapshot(config);
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null,displayedCompanies:null},rows:[]});
+  // Mesma estrutura e regra de exibição do quadro de companhias da página index:
+  // - ranking por BTC atual;
+  // - última divulgação só muda quando a quantidade de BTC muda;
+  // - penúltima divulgação é a última base anterior com valor diferente.
   const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,30);
-  const rows=companyRows.map(r=>{
-    const source=r.officialSource || companies?.summary?.sourceUrl || '#';
-    return `<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td><td>${fmtMoney(r.valueUsd||null,'USD',0)}</td><td><a href="${source}" target="_blank" rel="noreferrer">Fonte</a></td></tr>`;
-  }).join('');
-  setHtml('corp-table-body',rows||'<tr><td colspan="9">Sem dados</td></tr>');
+  const rows=companyRows.map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td></tr>`).join('');
+  setHtml('corp-table-body',rows||'<tr><td colspan="7">Sem dados</td></tr>');
   setText('corp-summary-count',companyRows.length?fmtNumber(companyRows.length,0):'N/D');
   setText('corp-summary-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
 }

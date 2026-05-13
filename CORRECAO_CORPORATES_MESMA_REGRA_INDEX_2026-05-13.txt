@@ -1,0 +1,5 @@
+Correção aplicada em 13/05/2026:
+- corporates.html passou a usar a mesma estrutura de colunas do quadro de companhias da página index.
+- A data da última divulgação permanece travada na data em que houve mudança efetiva da quantidade de BTC.
+- A penúltima divulgação busca a última base anterior com quantidade de BTC diferente.
+- Ranking mantido por maior quantidade atual de BTC, exibindo Top 30.

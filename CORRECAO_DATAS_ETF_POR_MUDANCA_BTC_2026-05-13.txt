@@ -1,0 +1,13 @@
+Correção aplicada em 13/05/2026
+
+Regra ajustada para ETFs na página index.html:
+- A data da última divulgação passa a ser a data em que a quantidade estimada de BTC mudou.
+- Se a quantidade de BTC permanecer igual nos dias seguintes, a data da última divulgação não muda.
+- A penúltima divulgação passa a ser a última base anterior com quantidade de BTC diferente.
+- A regra preserva o comportamento desejado: última e penúltima são eventos de mudança de quantidade, não simplesmente a data atual da tabela.
+
+Arquivos alterados:
+- api/farside-btc.js
+
+Observação:
+- O fluxo diário bruto da Farside continua disponível em flow/latestRawDate, mas a tabela de ranking usa as datas de divulgação por mudança de quantidade.

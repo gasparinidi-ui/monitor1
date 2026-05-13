@@ -85,6 +85,49 @@ function findPreviousDifferentTotal(rows,headerMap,latestIdx,latestTotal){
   }
   return {date:null,total:null};
 }
+
+function buildCumulativeRuns(rows,headerMap,ticker){
+  const points=[];
+  for(let i=0;i<rows.length;i++){
+    const cum=sumThrough(rows,headerMap,ticker,i);
+    if(cum==null) continue;
+    points.push({index:i,date:rows[i]?.[0]||null,cumulative:cum,flow:toNumber(rows[i]?.[headerMap[ticker]])});
+  }
+  const runs=[];
+  for(const point of points){
+    const last=runs[runs.length-1];
+    if(last && Math.abs(Number(last.cumulative)-Number(point.cumulative))<1e-9){
+      last.endIndex=point.index;
+      last.endDate=point.date;
+      last.lastFlow=point.flow;
+    }else{
+      runs.push({
+        startIndex:point.index,
+        endIndex:point.index,
+        startDate:point.date,
+        endDate:point.date,
+        cumulative:point.cumulative,
+        firstFlow:point.flow,
+        lastFlow:point.flow
+      });
+    }
+  }
+  return runs;
+}
+function findCurrentAndPreviousDisclosure(rows,headerMap,ticker){
+  const runs=buildCumulativeRuns(rows,headerMap,ticker);
+  const current=runs.length ? runs[runs.length-1] : null;
+  let previous=null;
+  if(current){
+    for(let i=runs.length-2;i>=0;i--){
+      if(Math.abs(Number(runs[i].cumulative)-Number(current.cumulative))>1e-9){
+        previous=runs[i];
+        break;
+      }
+    }
+  }
+  return {current,previous};
+}
 export default async function handler(req,res){
   setCors(res);
   if(req.method==='OPTIONS') return res.status(204).end();
@@ -110,20 +153,24 @@ export default async function handler(req,res){
     const prevTotal=findPreviousDifferentTotal(dataRows,headerMap,latestIdx,latestTotalFlow);
     const previousDate=prevTotal.date;
     const rows=KNOWN.map(t=>{
-      const cumulativeFlowUsdM=sumThrough(dataRows,headerMap,t,latestIdx);
-      const prev=findPreviousDifferentCumulative(dataRows,headerMap,t,latestIdx,cumulativeFlowUsdM);
+      const disclosure=findCurrentAndPreviousDisclosure(dataRows,headerMap,t);
+      const current=disclosure.current;
+      const previous=disclosure.previous;
+      const dailyFlow=toNumber(latest[headerMap[t]]);
       return {
         ticker:t,
         issuer:ETF_MAP[t],
-        date,
-        previousDate:prev.date,
-        flow:toNumber(latest[headerMap[t]]),
-        previousFlow:prev.flow,
-        cumulativeFlowUsdM,
-        previousCumulativeFlowUsdM:prev.cumulative,
+        date:current?.startDate || null,
+        latestRawDate:date,
+        previousDate:previous?.startDate || null,
+        flow:dailyFlow,
+        previousFlow:previous?.firstFlow ?? null,
+        cumulativeFlowUsdM:current?.cumulative ?? null,
+        previousCumulativeFlowUsdM:previous?.cumulative ?? null,
         btcSpotLast:null,
         btcSpotPrevious:null,
         btcSpotMethod:'estimated_from_cumulative_usd_flows',
+        dateSelection:'current_disclosure_date_changes_only_when_btc_quantity_changes',
         previousSelection:'last_prior_disclosure_with_different_value',
         aum:null
       };
