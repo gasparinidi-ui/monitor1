@@ -52,6 +52,9 @@ function btcChangeHtml(current, previous){
   const prefix=d>0?'+':'';
   return '<span class="btc-change '+cls+'">'+prefix+fmtBtc(d,0)+'</span>';
 }
+function previousChangeHtml(previous, third){
+  return btcChangeHtml(previous, third);
+}
 function positionCell(value,date){
   return `<div class="position"><strong>${fmtBtc(value,0)}</strong><span>${esc(date || 'N/D')}</span></div>`;
 }
@@ -162,7 +165,7 @@ function unavailableRows(){
     ['Corretoras','Aguardando prova de reserva / wallet tag confiavel'],
     ['Tesourarias BTC','Coberta parcialmente em Companhias e On-chain']
   ];
-  return rows.map(r=>`<tr><td>${r[0]}</td><td><span class="operator">${r[1]}</span></td><td class="num"><span class="btc-change neu">N/D</span></td><td class="num">${positionCell(null,null)}</td><td class="num">${positionCell(null,null)}</td><td class="num">${positionCell(null,null)}</td><td><span class="small">Fonte pendente</span></td></tr>`).join('');
+  return rows.map(r=>`<tr><td>${r[0]}</td><td><span class="operator">${r[1]}</span></td><td class="num"><span class="btc-change neu">N/D</span></td><td class="num">${positionCell(null,null)}</td><td class="num">${positionCell(null,null)}</td><td class="num"><span class="btc-change neu">N/D</span></td><td class="num">${positionCell(null,null)}</td><td><span class="small">Fonte pendente</span></td></tr>`).join('');
 }
 function etfPositionRow(item, flow){
   const current = flow?.btcSpotLast ?? null;
@@ -171,12 +174,12 @@ function etfPositionRow(item, flow){
   const currentDate = flow?.date || flow?.lastDate || null;
   const previousDate = flow?.previousDate || null;
   const thirdDate = flow?.thirdDate || flow?.beforePreviousDate || null;
-  return `<tr><td><span class="operator">${esc(item.ticker || flow?.ticker)}</span></td><td>${esc(item.issuer || flow?.issuer)}</td><td>${esc(item.label || 'ETF spot')}</td><td class="num">${btcChangeHtml(current,previous)}</td><td class="num">${positionCell(current,currentDate)}</td><td class="num">${positionCell(previous,previousDate)}</td><td class="num">${positionCell(third,thirdDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`;
+  return `<tr><td><span class="operator">${esc(item.ticker || flow?.ticker)}</span></td><td>${esc(item.issuer || flow?.issuer)}</td><td>${esc(item.label || 'ETF spot')}</td><td class="num">${btcChangeHtml(current,previous)}</td><td class="num">${positionCell(current,currentDate)}</td><td class="num">${positionCell(previous,previousDate)}</td><td class="num">${previousChangeHtml(previous,third)}</td><td class="num">${positionCell(third,thirdDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`;
 }
 function companyPositionRow(r, sourceUrl, includeValue=false){
   const third = r.thirdBtcHeld ?? r.beforePreviousBtcHeld ?? null;
   const thirdDate = r.thirdDisclosureDate ?? r.beforePreviousDisclosureDate ?? null;
-  const cells = [`<tr><td><span class="operator">${esc(r.ticker || 'N/D')}</span></td><td>${esc(r.company || 'N/D')}</td><td class="num">${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td class="num">${positionCell(r.btcHeld,r.lastDisclosureDate)}</td><td class="num">${positionCell(r.previousBtcHeld,r.previousDisclosureDate)}</td><td class="num">${positionCell(third,thirdDate)}</td>`];
+  const cells = [`<tr><td><span class="operator">${esc(r.ticker || 'N/D')}</span></td><td>${esc(r.company || 'N/D')}</td><td class="num">${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td class="num">${positionCell(r.btcHeld,r.lastDisclosureDate)}</td><td class="num">${positionCell(r.previousBtcHeld,r.previousDisclosureDate)}</td><td class="num">${previousChangeHtml(r.previousBtcHeld,third)}</td><td class="num">${positionCell(third,thirdDate)}</td>`];
   if(includeValue) cells.push(`<td class="num">${fmtMoney(r.valueUsd||null,'USD',0)}</td>`);
   cells.push(`<td>${sourceCell(r.officialSource || sourceUrl || '#')}</td></tr>`);
   return cells.join('');
@@ -221,12 +224,12 @@ async function renderOverview(config){
   setHtml('top-public-btc-delta','<span class="delta neu">Fonte estrutural diaria</span>');
 
   const topFlows=sortByCurrentBtcDesc((flows?.rows||[]).filter(r=>r?.ticker && r?.btcSpotLast!=null),'btcSpotLast').slice(0,12)
-    .map(r=>`<tr><td><span class="operator">${esc(r.ticker)}</span></td><td>${esc(r.issuer)}</td><td class="num">${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td class="num">${positionCell(r.btcSpotLast,r.date)}</td><td class="num">${positionCell(r.btcSpotPrevious,r.previousDate)}</td><td class="num">${positionCell(r.btcSpotThird ?? r.btcSpotBeforePrevious,r.thirdDate ?? r.beforePreviousDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`).join('');
-  setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diaria</td></tr>');
+    .map(r=>`<tr><td><span class="operator">${esc(r.ticker)}</span></td><td>${esc(r.issuer)}</td><td class="num">${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td class="num">${positionCell(r.btcSpotLast,r.date)}</td><td class="num">${positionCell(r.btcSpotPrevious,r.previousDate)}</td><td class="num">${previousChangeHtml(r.btcSpotPrevious,r.btcSpotThird ?? r.btcSpotBeforePrevious)}</td><td class="num">${positionCell(r.btcSpotThird ?? r.btcSpotBeforePrevious,r.thirdDate ?? r.beforePreviousDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`).join('');
+  setHtml('top-flows-body',topFlows||'<tr><td colspan="8">Sem dados da fonte diaria</td></tr>');
 
   const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,12);
   const topCompanies=companyRows.map(r=>companyPositionRow(r, companies?.summary?.sourceUrl, false)).join('');
-  setHtml('top-companies-body',topCompanies||'<tr><td colspan="7">Sem dados da fonte diaria</td></tr>');
+  setHtml('top-companies-body',topCompanies||'<tr><td colspan="8">Sem dados da fonte diaria</td></tr>');
   setHtml('overview-watch-body',unavailableRows());
 }
 async function renderEtfs(config){
@@ -237,7 +240,7 @@ async function renderEtfs(config){
     const f=(flows?.rows||[]).find(x=>x.ticker===item.ticker || (x.issuer||'').toLowerCase().includes((item.issuer||'').toLowerCase().split(' ')[0]))||{};
     return etfPositionRow(item, f);
   }).join('');
-  setHtml('etf-table-body',rows||'<tr><td colspan="8">Sem dados</td></tr>');
+  setHtml('etf-table-body',rows||'<tr><td colspan="9">Sem dados</td></tr>');
   setText('etf-last-date',flows?.summary?.latestDate||'N/D');
   setText('etf-last-total',flows?.summary?.latestTotalFlow!=null?fmtMoney(flows.summary.latestTotalFlow,'USD',1):'N/D');
 }
@@ -246,7 +249,7 @@ async function renderCorporates(config){
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null,displayedCompanies:null},rows:[]});
   const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,30);
   const rows=companyRows.map(r=>companyPositionRow(r, companies?.summary?.sourceUrl, true)).join('');
-  setHtml('corp-table-body',rows||'<tr><td colspan="8">Sem dados</td></tr>');
+  setHtml('corp-table-body',rows||'<tr><td colspan="9">Sem dados</td></tr>');
   setText('corp-summary-count',companyRows.length?fmtNumber(companyRows.length,0):'N/D');
   setText('corp-summary-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
 }

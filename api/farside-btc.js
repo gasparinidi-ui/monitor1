@@ -70,10 +70,10 @@ function findPreviousDifferentCumulative(rows,headerMap,ticker,latestIdx,latestC
     const cum=sumThrough(rows,headerMap,ticker,i);
     if(cum==null) continue;
     if(latestCum==null || Math.abs(Number(cum)-Number(latestCum))>1e-9){
-      return {date:rows[i]?.[0]||null,cumulative:cum,flow:toNumber(rows[i]?.[headerMap[ticker]])};
+      return {idx:i,date:rows[i]?.[0]||null,cumulative:cum,flow:toNumber(rows[i]?.[headerMap[ticker]])};
     }
   }
-  return {date:null,cumulative:null,flow:null};
+  return {idx:null,date:null,cumulative:null,flow:null};
 }
 function findPreviousDifferentTotal(rows,headerMap,latestIdx,latestTotal){
   for(let i=latestIdx-1;i>=0;i--){
@@ -112,17 +112,22 @@ export default async function handler(req,res){
     const rows=KNOWN.map(t=>{
       const cumulativeFlowUsdM=sumThrough(dataRows,headerMap,t,latestIdx);
       const prev=findPreviousDifferentCumulative(dataRows,headerMap,t,latestIdx,cumulativeFlowUsdM);
+      const third=prev.idx!=null ? findPreviousDifferentCumulative(dataRows,headerMap,t,prev.idx,prev.cumulative) : {date:null,cumulative:null,flow:null};
       return {
         ticker:t,
         issuer:ETF_MAP[t],
         date,
         previousDate:prev.date,
+        thirdDate:third.date,
         flow:toNumber(latest[headerMap[t]]),
         previousFlow:prev.flow,
+        thirdFlow:third.flow,
         cumulativeFlowUsdM,
         previousCumulativeFlowUsdM:prev.cumulative,
+        thirdCumulativeFlowUsdM:third.cumulative,
         btcSpotLast:null,
         btcSpotPrevious:null,
+        btcSpotThird:null,
         btcSpotMethod:'estimated_from_cumulative_usd_flows',
         previousSelection:'last_prior_disclosure_with_different_value',
         aum:null

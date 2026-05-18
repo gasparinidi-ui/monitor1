@@ -34,10 +34,12 @@ function enrichEtfFlows(flows, btc){
   const rows=flows.rows.map(r=>{
     const cum=Number(r.cumulativeFlowUsdM);
     const prev=Number(r.previousCumulativeFlowUsdM);
+    const third=Number(r.thirdCumulativeFlowUsdM);
     return {
       ...r,
       btcSpotLast:Number.isFinite(cum) ? (cum*1000000)/btcPrice : null,
       btcSpotPrevious:Number.isFinite(prev) ? (prev*1000000)/btcPrice : null,
+      btcSpotThird:Number.isFinite(third) ? (third*1000000)/btcPrice : null,
       btcSpotMethod:'estimated_from_cumulative_usd_flows_and_btc_price'
     };
   });

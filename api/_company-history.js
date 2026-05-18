@@ -105,17 +105,18 @@ export function addCurrentToHistory(history, rows, date=todayIso()){
   filtered.push({date,rows:cleanCurrent});
   return normaliseHistory(filtered);
 }
-export function findPreviousDifferent(history, ticker, currentValue, currentDisclosureDate){
+export function findPreviousDifferent(history, ticker, currentValue, currentDisclosureDate, excludedDates=[]){
   const t=String(ticker||'').toUpperCase();
   const cur=num(currentValue);
   if(!t || cur===null) return null;
+  const blocked=new Set([String(currentDisclosureDate),...(excludedDates||[]).map(String)]);
   const hist=normaliseHistory(history);
   for(let i=hist.length-1;i>=0;i--){
     const snap=hist[i];
     const row=(snap.rows||[]).find(r=>String(r.ticker||'').toUpperCase()===t);
     if(!row) continue;
     const rowDate=row.lastDisclosureDate||snap.date;
-    if(String(rowDate)===String(currentDisclosureDate)) continue;
+    if(blocked.has(String(rowDate))) continue;
     if(sameValue(row.btcHeld,cur)) continue;
     return {date:rowDate,value:row.btcHeld};
   }
@@ -132,11 +133,14 @@ export async function applyCompanyHistory(rows, date=todayIso()){
   const enriched=enrichedPreSave.map(r=>{
     const currentDate=r.lastDisclosureDate||date;
     const prev=findPreviousDifferent(updated,r.ticker,r.btcHeld,currentDate);
+    const third=prev ? findPreviousDifferent(updated,r.ticker,prev.value,prev.date,[currentDate]) : null;
     return {
       ...r,
       lastDisclosureDate:currentDate,
       previousDisclosureDate:prev?.date||null,
-      previousBtcHeld:prev?.value??null
+      previousBtcHeld:prev?.value??null,
+      thirdDisclosureDate:third?.date||null,
+      thirdBtcHeld:third?.value??null
     };
   });
   return {rows:enriched,history:updated,historyMeta:{...persist,entries:updated.length,key:HISTORY_KEY}};

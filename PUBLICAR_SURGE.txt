@@ -1,0 +1,13 @@
+﻿PUBLICACAO SURGE - Bitcoin Big Holders Monitor
+
+Pasta para publicar:
+surge_frontend
+
+Comando sugerido, dentro desta pasta:
+surge .
+
+Observacao:
+Este pacote contem somente frontend estatico. O arquivo data/app-config.json aponta para a API Vercel:
+https://monitor1-sooty.vercel.app
+
+Se mudar o dominio da Vercel, atualize data/app-config.json antes de publicar no Surge.
