@@ -1,8 +1,8 @@
-{
-  "appName": "BTC Spot Monitor",
-  "apiBaseUrl": "https://monitor1-sooty.vercel.app",
-  "refreshMs": 300000,
-  "timezone": "America/Campo_Grande",
-  "currency": "USD",
-  "notes": "Configuração corrigida. Para publicar tudo no mesmo domínio da Vercel, este campo também pode ficar vazio. Para usar o frontend no Surge, mantenha a URL da Vercel."
+﻿{
+    "appName":  "BTC Spot Monitor",
+    "apiBaseUrl":  "",
+    "refreshMs":  300000,
+    "timezone":  "America/Campo_Grande",
+    "currency":  "USD",
+    "notes":  "Publicacao Vercel: apiBaseUrl vazio para usar as APIs do mesmo dominio."
 }

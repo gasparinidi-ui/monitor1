@@ -12,11 +12,12 @@ function absoluteBaseUrl(req){
   return `${proto}://${host}`;
 }
 
-async function getJson(url){
-  const r=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 BTC Spot Monitor Daily Snapshot'},cache:'no-store'});
+async function getJson(url, refresh=false){
+  const target=refresh ? `${url}${url.includes('?')?'&':'?'}refresh=${Date.now()}` : url;
+  const r=await fetch(target,{headers:{'user-agent':'Mozilla/5.0 BTC Spot Monitor Daily Snapshot'},cache:'no-store'});
   let data=null;
   try{data=await r.json();}catch{data=null;}
-  if(!r.ok) throw new Error(`${url} HTTP ${r.status}`);
+  if(!r.ok) throw new Error(`${target} HTTP ${r.status}`);
   return data;
 }
 
@@ -55,6 +56,7 @@ function mergeCompanies(companies, btc){
 export default async function handler(req,res){
   setCors(res);
   if(req.method==='OPTIONS') return res.status(204).end();
+  const refresh=req.query.refresh==='1' || req.query.refresh==='true';
   const base=absoluteBaseUrl(req);
   const endpoints={
     btc:`${base}/api/btc-price`,
@@ -66,31 +68,34 @@ export default async function handler(req,res){
     onchainDormant:`${base}/api/onchain-dormant`
   };
   const entries=await Promise.all(Object.entries(endpoints).map(async([name,url])=>{
-    try{return {name,ok:true,data:await getJson(url)}}
+    try{
+      const data=await getJson(url, refresh);
+      return {name,ok:data?.ok!==false,data,error:data?.ok===false ? (data.warning || data.error || 'provider returned ok=false') : undefined};
+    }
     catch(error){return {name,ok:false,error:error.message,data:null}}
   }));
   const map=Object.fromEntries(entries.map(e=>[e.name,e]));
   const status=statusFrom(entries);
   const btc=map.btc.data||{ok:false,price:null,source:'CoinGecko'};
   const flows=enrichEtfFlows(map.flows.data||{ok:false,summary:{latestDate:null,latestTotalFlow:null},rows:[],source:'Farside'},btc);
-  let companies=mergeCompanies(map.companies.data||{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[],source:'BitcoinTreasuries'},btc);
+  let companies=mergeCompanies(map.companies.data||{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[],source:'CoinGecko'},btc);
   const companyDate=companies?.summary?.latestDate || new Date().toISOString().slice(0,10);
   const companyHistoryResult=await applyCompanyHistory(companies.rows||[], companyDate);
   companies={...companies,rows:companyHistoryResult.rows,historyMeta:companyHistoryResult.historyMeta};
   const payload={
     ok: status.status!=='failed',
-    snapshotType:'daily-cached',
+    snapshotType:refresh ? 'manual-refresh' : 'daily-cached',
     generatedAt:new Date().toISOString(),
     timezone:'America/Campo_Grande',
     status,
-    cache:{policy:'Vercel CDN',seconds:86400,staleWhileRevalidate:604800},
+    cache:refresh ? {policy:'no-store',seconds:0,staleWhileRevalidate:0} : {policy:'Vercel CDN',seconds:86400,staleWhileRevalidate:604800},
     sources:{
       btc:btc?.source||'CoinGecko',
       flows:flows?.source||'Farside',
-      companies:companies?.source||'BitcoinTreasuries',
+      companies:companies?.source||'CoinGecko',
       companyHistory:companies?.historyMeta?.provider||'memory-only',
       quotes:'Finnhub',
-      onchainDormant:'CoinMetrics Community API'
+      onchainDormant:'BTCFunk HODL Waves'
     },
     data:{
       btc,
@@ -99,10 +104,10 @@ export default async function handler(req,res){
       overviewQuotes:map.overviewQuotes.data||{ok:false,quotes:[]},
       etfQuotes:map.etfQuotes.data||{ok:false,quotes:[]},
       companyQuotes:map.companyQuotes.data||{ok:false,quotes:[]},
-      onchainDormant:map.onchainDormant.data||{ok:false,rows:[],source:'CoinMetrics Community API'}
+      onchainDormant:map.onchainDormant.data||{ok:false,rows:[],source:'BTCFunk HODL Waves'}
     },
     errors:entries.filter(e=>!e.ok).map(e=>({source:e.name,error:e.error}))
   };
-  res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
+  res.setHeader('Cache-Control', refresh ? 'no-store' : 'public, s-maxage=86400, stale-while-revalidate=604800');
   return res.status(200).json(payload);
 }

@@ -1,10 +1,13 @@
-const DEFAULT_TZ = 'America/Campo_Grande';
+﻿const DEFAULT_TZ = 'America/Campo_Grande';
 let DAILY_SNAPSHOT_CACHE = null;
 
 async function loadJson(path){
   const r = await fetch(path, { cache: 'no-store' });
   if(!r.ok) throw new Error(`Falha ao carregar ${path} (${r.status})`);
   return r.json();
+}
+function esc(v){
+  return String(v ?? 'N/D').replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
 }
 function fmtNumber(v,d=0){
   if(v===null||v===undefined||v==='') return 'N/D';
@@ -36,7 +39,6 @@ function fmtDateTime(v,tz=DEFAULT_TZ){
   if(Number.isNaN(d.getTime())) return String(v);
   return d.toLocaleString('pt-BR',{timeZone:tz});
 }
-
 function numOrNull(v){
   if(v===null||v===undefined||v==='') return null;
   const n=Number(v);
@@ -49,6 +51,13 @@ function btcChangeHtml(current, previous){
   const cls=d>0?'pos':d<0?'neg':'neu';
   const prefix=d>0?'+':'';
   return '<span class="btc-change '+cls+'">'+prefix+fmtBtc(d,0)+'</span>';
+}
+function positionCell(value,date){
+  return `<div class="position"><strong>${fmtBtc(value,0)}</strong><span>${esc(date || 'N/D')}</span></div>`;
+}
+function sourceCell(url,label='Fonte'){
+  if(!url || url==='#') return '<span class="small">N/D</span>';
+  return `<a class="source-pill" href="${esc(url)}" target="_blank" rel="noreferrer">${esc(label)}</a>`;
 }
 function sortByCurrentBtcDesc(rows, field='btcSpotLast'){
   return [...(rows||[])].sort((a,b)=>(numOrNull(b?.[field])??-Infinity)-(numOrNull(a?.[field])??-Infinity));
@@ -76,26 +85,6 @@ function saveHistory(key,entry,max=45){
   filtered.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
   saveSnapshot(key,{history:filtered.slice(-max)});
 }
-function findPreviousDifferentFromHistory(history,row,currentDate,valueField='btcHeld'){
-  const key=(row.ticker||row.company||'').toUpperCase();
-  const currentValue=row[valueField];
-  for(const snap of [...history].reverse()){
-    for(const candidate of (snap.rows||[])){
-      const ckey=(candidate.ticker||candidate.company||'').toUpperCase();
-      if(ckey!==key) continue;
-      const candidateDate=candidate.lastDisclosureDate||candidate.date||snap.date||null;
-      const candidateValue=candidate[valueField];
-      if(sameDateLabel(candidateDate,currentDate)) continue;
-      if(sameValue(candidateValue,currentValue)) continue;
-      return {date:candidateDate,value:candidateValue};
-    }
-  }
-  return {date:null,value:null};
-}
-function todayLabel(tz=DEFAULT_TZ){
-  return new Date().toLocaleDateString('pt-BR',{timeZone:tz});
-}
-
 function setText(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function setHtml(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;}
 function saveSnapshot(key,payload){try{localStorage.setItem(key,JSON.stringify({ts:Date.now(),payload}));}catch(e){console.warn('snapshot',e);}}
@@ -106,7 +95,7 @@ function deltaLabel(current,previous,d=0){
   if(Number.isNaN(delta)) return '<span class="delta neu">Sem base comparativa local</span>';
   const cls=delta>0?'pos':delta<0?'neg':'neu';
   const prefix=delta>0?'+':'';
-  return `<span class="delta ${cls}">${prefix}${fmtNumber(delta,d)} vs. último snapshot local</span>`;
+  return `<span class="delta ${cls}">${prefix}${fmtNumber(delta,d)} vs. ultimo snapshot local</span>`;
 }
 function normalizeApiBase(config){
   let base = String(config.apiBaseUrl || '').trim().replace(/\/$/, '');
@@ -123,7 +112,7 @@ async function fetchProvider(config,endpoint){
   const res = await fetch(url, { cache: 'no-store' });
   let data = null;
   try{ data = await res.json(); }catch{ data = null; }
-  if(!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}${data?.error ? ' — '+data.error : ''}`);
+  if(!res.ok) throw new Error(`${endpoint}: HTTP ${res.status}${data?.error ? ' - '+data.error : ''}`);
   if(data && data.ok === false) console.warn(`${endpoint}:`, data.warning || data.error || 'provider retornou ok=false');
   return data;
 }
@@ -134,7 +123,7 @@ async function getDailySnapshot(config){
     renderSnapshotStatus(DAILY_SNAPSHOT_CACHE, config);
     return DAILY_SNAPSHOT_CACHE;
   }catch(err){
-    addRuntimeWarning(`Snapshot diário indisponível: ${err.message}. Usando APIs individuais como fallback.`);
+    addRuntimeWarning(`Snapshot diario indisponivel: ${err.message}. Usando APIs individuais como fallback.`);
     DAILY_SNAPSHOT_CACHE = null;
     return null;
   }
@@ -143,7 +132,7 @@ function renderSnapshotStatus(snap, config){
   const status=snap?.status?.label || 'N/D';
   const generated=fmtDateTime(snap?.generatedAt, config.timezone || DEFAULT_TZ);
   const failed=(snap?.status?.failed||[]).length ? ` | Falhas: ${(snap.status.failed||[]).join(', ')}` : '';
-  setText('snapshot-status',`${status} | Snapshot: ${generated}${failed}`);
+  setText('snapshot-status',`${status} | ${generated}${failed}`);
 }
 async function safeProvider(config, endpoint, fallback){
   try { return await fetchProvider(config, endpoint); }
@@ -164,7 +153,33 @@ function buildNav(active){
 }
 function showFatal(err){
   console.error(err);
-  setHtml('page-error',`<div class="notice bad-note"><strong>Erro ao inicializar:</strong> ${err.message}</div>`);
+  setHtml('page-error',`<div class="notice bad-note"><strong>Erro ao inicializar:</strong> ${esc(err.message)}</div>`);
+}
+function unavailableRows(){
+  const rows = [
+    ['Fundos','Aguardando fonte declarada'],
+    ['Baleias','Aguardando fonte on-chain nomeada'],
+    ['Corretoras','Aguardando prova de reserva / wallet tag confiavel'],
+    ['Tesourarias BTC','Coberta parcialmente em Companhias e On-chain']
+  ];
+  return rows.map(r=>`<tr><td>${r[0]}</td><td><span class="operator">${r[1]}</span></td><td class="num"><span class="btc-change neu">N/D</span></td><td class="num">${positionCell(null,null)}</td><td class="num">${positionCell(null,null)}</td><td class="num">${positionCell(null,null)}</td><td><span class="small">Fonte pendente</span></td></tr>`).join('');
+}
+function etfPositionRow(item, flow){
+  const current = flow?.btcSpotLast ?? null;
+  const previous = flow?.btcSpotPrevious ?? null;
+  const third = flow?.btcSpotThird ?? flow?.btcSpotBeforePrevious ?? null;
+  const currentDate = flow?.date || flow?.lastDate || null;
+  const previousDate = flow?.previousDate || null;
+  const thirdDate = flow?.thirdDate || flow?.beforePreviousDate || null;
+  return `<tr><td><span class="operator">${esc(item.ticker || flow?.ticker)}</span></td><td>${esc(item.issuer || flow?.issuer)}</td><td>${esc(item.label || 'ETF spot')}</td><td class="num">${btcChangeHtml(current,previous)}</td><td class="num">${positionCell(current,currentDate)}</td><td class="num">${positionCell(previous,previousDate)}</td><td class="num">${positionCell(third,thirdDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`;
+}
+function companyPositionRow(r, sourceUrl, includeValue=false){
+  const third = r.thirdBtcHeld ?? r.beforePreviousBtcHeld ?? null;
+  const thirdDate = r.thirdDisclosureDate ?? r.beforePreviousDisclosureDate ?? null;
+  const cells = [`<tr><td><span class="operator">${esc(r.ticker || 'N/D')}</span></td><td>${esc(r.company || 'N/D')}</td><td class="num">${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td class="num">${positionCell(r.btcHeld,r.lastDisclosureDate)}</td><td class="num">${positionCell(r.previousBtcHeld,r.previousDisclosureDate)}</td><td class="num">${positionCell(third,thirdDate)}</td>`];
+  if(includeValue) cells.push(`<td class="num">${fmtMoney(r.valueUsd||null,'USD',0)}</td>`);
+  cells.push(`<td>${sourceCell(r.officialSource || sourceUrl || '#')}</td></tr>`);
+  return cells.join('');
 }
 
 async function init(){
@@ -174,7 +189,7 @@ async function init(){
   const tz = config.timezone || DEFAULT_TZ;
   setText('generated-time',new Date().toLocaleString('pt-BR',{timeZone:tz}));
   setText('api-base',normalizeApiBase(config)||'mesma origem');
-  setText('snapshot-status','Carregando snapshot diário...');
+  setText('snapshot-status','Carregando...');
   const page=document.body.dataset.page||'overview';
   buildNav(page);
   try{
@@ -185,7 +200,7 @@ async function init(){
     if(page==='onchain') await renderOnchain(config);
     if(page==='settings') await renderSettings(config);
   }catch(err){ showFatal(err); }
-  setText('refresh-ms','diário via Vercel Cron');
+  setText('refresh-ms','diario via Vercel Cron');
 }
 
 async function renderOverview(config){
@@ -193,7 +208,6 @@ async function renderOverview(config){
   const btc=snap?.data?.btc || await safeProvider(config,'/api/btc-price',{ok:false,price:null});
   const flows=snap?.data?.flows || await safeProvider(config,'/api/farside-btc',{ok:false,summary:{latestTotalFlow:null,latestDate:null},rows:[]});
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[]});
-  const batch=snap?.data?.overviewQuotes || await safeProvider(config,'/api/finnhub-batch?kind=overview',{ok:false,quotes:[]});
   const key='btc-spot-monitor-overview';
   const prev=readSnapshot(key);
   saveSnapshot(key,{totalFlow:flows?.summary?.latestTotalFlow??null,btcPrice:btc?.price??null,publicCompanies:companies?.summary?.publicCompanies??null});
@@ -204,27 +218,24 @@ async function renderOverview(config){
   setText('public-companies',companies?.summary?.publicCompanies!=null?fmtNumber(companies.summary.publicCompanies,0):'N/D');
   setHtml('public-companies-delta',prev?deltaLabel(companies?.summary?.publicCompanies,prev?.payload?.publicCompanies,0):'<span class="delta neu">Sem base comparativa local</span>');
   setText('top-public-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
-  setHtml('top-public-btc-delta','<span class="delta neu">Fonte estrutural diária</span>');
-  const topFlows=sortByCurrentBtcDesc((flows?.rows||[]).filter(r=>r?.ticker && r?.btcSpotLast!=null),'btcSpotLast')
-    .slice(0,12)
-    .map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.issuer||'N/D'}</td><td>${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td>${r.date||'N/D'}</td><td>${fmtBtc(r.btcSpotLast,0)}</td><td>${r.previousDate||'N/D'}</td><td>${fmtBtc(r.btcSpotPrevious,0)}</td></tr>`).join('');
-  setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
+  setHtml('top-public-btc-delta','<span class="delta neu">Fonte estrutural diaria</span>');
+
+  const topFlows=sortByCurrentBtcDesc((flows?.rows||[]).filter(r=>r?.ticker && r?.btcSpotLast!=null),'btcSpotLast').slice(0,12)
+    .map(r=>`<tr><td><span class="operator">${esc(r.ticker)}</span></td><td>${esc(r.issuer)}</td><td class="num">${btcChangeHtml(r.btcSpotLast,r.btcSpotPrevious)}</td><td class="num">${positionCell(r.btcSpotLast,r.date)}</td><td class="num">${positionCell(r.btcSpotPrevious,r.previousDate)}</td><td class="num">${positionCell(r.btcSpotThird ?? r.btcSpotBeforePrevious,r.thirdDate ?? r.beforePreviousDate)}</td><td>${sourceCell('https://farside.co.uk/btc/','Farside')}</td></tr>`).join('');
+  setHtml('top-flows-body',topFlows||'<tr><td colspan="7">Sem dados da fonte diaria</td></tr>');
 
   const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,12);
-  const topCompanies=companyRows.map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td></tr>`).join('');
-  setHtml('top-companies-body',topCompanies||'<tr><td colspan="7">Sem dados da fonte diária</td></tr>');
-  const watch=(batch?.quotes||[]).map(q=>`<div class="list-item"><div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><div><strong>${q.symbol}</strong> <span class="small">— ${q.name||'N/D'}</span></div><div class="small">${q.type||'Watchlist'}</div></div><div style="text-align:right"><div><strong>${fmtMoney(q.price,'USD',2)}</strong></div><div class="small">${fmtPercent(q.changePct,2)}</div></div></div></div>`).join('');
-  setHtml('watchlist-cards',watch||'<div class="notice">Sem dados de cotação. Verifique FINNHUB_API_KEY na Vercel.</div>');
+  const topCompanies=companyRows.map(r=>companyPositionRow(r, companies?.summary?.sourceUrl, false)).join('');
+  setHtml('top-companies-body',topCompanies||'<tr><td colspan="7">Sem dados da fonte diaria</td></tr>');
+  setHtml('overview-watch-body',unavailableRows());
 }
 async function renderEtfs(config){
   const snap=await getDailySnapshot(config);
   const flows=snap?.data?.flows || await safeProvider(config,'/api/farside-btc',{ok:false,summary:{latestTotalFlow:null,latestDate:null},rows:[]});
-  const holdings=snap?.data?.etfQuotes || await safeProvider(config,'/api/finnhub-batch?kind=etfs',{ok:false,quotes:[]});
   const list=await loadJson('./data/etf_watchlist.json');
   const rows=list.map(item=>{
-    const q=(holdings?.quotes||[]).find(x=>x.symbol===item.ticker)||{};
     const f=(flows?.rows||[]).find(x=>x.ticker===item.ticker || (x.issuer||'').toLowerCase().includes((item.issuer||'').toLowerCase().split(' ')[0]))||{};
-    return `<tr><td>${item.ticker}</td><td>${item.issuer}</td><td>${item.label}</td><td>${fmtMoney(q.price,'USD',2)}</td><td>${fmtPercent(q.changePct,2)}</td><td>${fmtMoney(f.flow,'USD',1)}</td><td>${fmtMoney(q.aum||null,'USD',0)}</td><td>${fmtNumber(q.sharesOutstanding||null,0)}</td></tr>`;
+    return etfPositionRow(item, f);
   }).join('');
   setHtml('etf-table-body',rows||'<tr><td colspan="8">Sem dados</td></tr>');
   setText('etf-last-date',flows?.summary?.latestDate||'N/D');
@@ -233,13 +244,9 @@ async function renderEtfs(config){
 async function renderCorporates(config){
   const snap=await getDailySnapshot(config);
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null,displayedCompanies:null},rows:[]});
-  // Mesma estrutura e regra de exibição do quadro de companhias da página index:
-  // - ranking por BTC atual;
-  // - última divulgação só muda quando a quantidade de BTC muda;
-  // - penúltima divulgação é a última base anterior com valor diferente.
   const companyRows=sortByCurrentBtcDesc((companies?.rows||[]).filter(r=>r?.btcHeld!=null),'btcHeld').slice(0,30);
-  const rows=companyRows.map(r=>`<tr><td>${r.ticker||'N/D'}</td><td>${r.company||'N/D'}</td><td>${btcChangeHtml(r.btcHeld,r.previousBtcHeld)}</td><td>${r.lastDisclosureDate||'N/D'}</td><td>${fmtBtc(r.btcHeld,0)}</td><td>${r.previousDisclosureDate||'N/D'}</td><td>${fmtBtc(r.previousBtcHeld,0)}</td></tr>`).join('');
-  setHtml('corp-table-body',rows||'<tr><td colspan="7">Sem dados</td></tr>');
+  const rows=companyRows.map(r=>companyPositionRow(r, companies?.summary?.sourceUrl, true)).join('');
+  setHtml('corp-table-body',rows||'<tr><td colspan="8">Sem dados</td></tr>');
   setText('corp-summary-count',companyRows.length?fmtNumber(companyRows.length,0):'N/D');
   setText('corp-summary-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
 }
@@ -248,23 +255,22 @@ async function renderMarket(config){
   const btc=snap?.data?.btc || await safeProvider(config,'/api/btc-price',{ok:false,price:null});
   const flows=snap?.data?.flows || await safeProvider(config,'/api/farside-btc',{ok:false,summary:{latestTotalFlow:null,latestDate:null},rows:[]});
   const companies=snap?.data?.companies || await safeProvider(config,'/api/public-companies',{ok:false,summary:{publicCompanies:null,totalBtc:null},rows:[]});
-  const etfQuotes=snap?.data?.etfQuotes || await safeProvider(config,'/api/finnhub-batch?kind=etfs',{ok:false,quotes:[]});
   setText('market-btc-price',btc?.price?fmtMoney(btc.price,'USD',0):'N/D');
   setText('market-etf-flow',flows?.summary?.latestTotalFlow!=null?fmtMoney(flows.summary.latestTotalFlow,'USD',1):'N/D');
   setText('market-corp-btc',companies?.summary?.totalBtc!=null?`${fmtNumber(companies.summary.totalBtc,0)} BTC`:'N/D');
-  const top3=(etfQuotes?.quotes||[]).slice(0,6).map(q=>`<div class="list-item"><div class="kv"><div>${q.symbol}</div><div><strong>${fmtMoney(q.price,'USD',2)}</strong> <span class="small">· ${fmtPercent(q.changePct,2)}</span></div></div></div>`).join('');
-  setHtml('market-watch',top3||'<div class="notice">Sem dados de cotação. Verifique FINNHUB_API_KEY na Vercel.</div>');
+  setHtml('market-watch',unavailableRows());
 }
 async function renderSettings(config){
   const snap=await getDailySnapshot(config);
   const [providers,etfs,corps]=await Promise.all([loadJson('./data/providers.json'),loadJson('./data/etf_watchlist.json'),loadJson('./data/company_watchlist.json')]);
   const configView={...config, dailySnapshotEndpoint:'/api/snapshot', dailyCron:'0 11 * * * UTC', snapshotStatus:snap?.status||null};
-  setHtml('config-json',`<pre class="code">${JSON.stringify(configView,null,2)}</pre>`);
-  setHtml('providers-list',providers.providers.map(p=>`<div class="list-item"><div><strong>${p.name}</strong></div><div class="small">${p.purpose}</div><div class="small">Endpoint: ${p.endpoint}</div></div>`).join(''));
+  setHtml('config-json',`<pre class="code">${esc(JSON.stringify(configView,null,2))}</pre>`);
+  setHtml('providers-list',providers.providers.map(p=>`<div class="list-item"><div><strong>${esc(p.name)}</strong></div><div class="small">${esc(p.purpose)}</div><div class="small">Endpoint: ${esc(p.endpoint)}</div></div>`).join(''));
   setText('watch-etf-count',String(etfs.length));
   setText('watch-corp-count',String(corps.length));
 }
 window.addEventListener('DOMContentLoaded',init);
+
 function yyyyMmDd(value, tz=DEFAULT_TZ){
   if(!value) return new Date().toLocaleDateString('en-CA',{timeZone:tz});
   const d = new Date(value);
@@ -312,8 +318,8 @@ function findHistoryEntry(history,dateKey){
 }
 function cellOnchain(entry, years){
   const r=(entry?.rows||[]).find(x=>Number(x.years)===Number(years));
-  if(!r) return '<strong>N/D</strong><div class="small">sem histórico</div>';
-  return `<strong>${fmtBtc(r.dormantSupply,0)}</strong><div class="small">${fmtPercent(r.dormantPct,2)} da oferta</div>`;
+  if(!r) return '<strong>N/D</strong><span class="sub">sem historico</span>';
+  return `<strong>${fmtBtc(r.dormantSupply,0)}</strong><span class="sub">${fmtPercent(r.dormantPct,2)} da oferta</span>`;
 }
 async function renderOnchain(config){
   const snap=await getDailySnapshot(config);
@@ -337,8 +343,8 @@ async function renderOnchain(config){
   setText('onchain-yesterday-label',ptDateFromKey(yesterdayKey));
   setText('onchain-before-yesterday-label',ptDateFromKey(beforeYesterdayKey));
   const yearsList=[...new Set(rows.map(r=>Number(r.years)).filter(Boolean))].sort((a,b)=>a-b);
-  const historyBody=yearsList.map(y=>`<tr><td><strong>${y}+ anos</strong><div class="small">não movimentados</div></td><td>${cellOnchain(todayEntry,y)}</td><td>${cellOnchain(yesterdayEntry,y)}</td><td>${cellOnchain(beforeYesterdayEntry,y)}</td></tr>`).join('');
+  const historyBody=yearsList.map(y=>`<tr><td><span class="operator">${y}+ anos</span><span class="sub">nao movimentados</span></td><td class="num">${cellOnchain(todayEntry,y)}</td><td class="num">${cellOnchain(yesterdayEntry,y)}</td><td class="num">${cellOnchain(beforeYesterdayEntry,y)}</td></tr>`).join('');
   setHtml('onchain-history-body',historyBody||'<tr><td colspan="4">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
-  const body=rows.map(r=>`<tr><td>${r.bucket||'N/D'}</td><td>${fmtBtc(r.dormantSupply,0)}</td><td>${fmtPercent(r.dormantPct,2)}</td><td>${fmtBtc(r.activeSupply,0)}</td><td>${fmtBtc(r.currentSupply,0)}</td><td>${r.metric||'N/D'}</td></tr>`).join('');
+  const body=rows.map(r=>`<tr><td>${esc(r.bucket||'N/D')}</td><td class="num">${fmtBtc(r.dormantSupply,0)}</td><td class="num">${fmtPercent(r.dormantPct,2)}</td><td class="num">${fmtBtc(r.activeSupply,0)}</td><td class="num">${fmtBtc(r.currentSupply,0)}</td><td>${esc(r.metric||'N/D')}</td></tr>`).join('');
   setHtml('onchain-dormant-body',body||'<tr><td colspan="6">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
 }

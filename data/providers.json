@@ -21,8 +21,8 @@
       "endpoint": "/api/btc-price"
     },
     {
-      "name": "CoinMetrics Community API",
-      "purpose": "Oferta ativa e oferta parada por idade on-chain, sem chave paga",
+      "name": "BTCFunk HODL Waves",
+      "purpose": "Oferta parada por idade on-chain, sem chave paga",
       "endpoint": "/api/onchain-dormant"
     }
   ]

@@ -1,102 +1,78 @@
-# BTC Spot Monitor — Surge + Vercel
+# BTC Spot Monitor - Surge + Vercel
 
 Projeto pronto para:
-- **Frontend estático no Surge**
-- **Backend proxy/agregador na Vercel**
-- **Dados via Finnhub, Farside, BitcoinTreasuries e CoinGecko**
+- Frontend estatico no Surge
+- Backend proxy/agregador na Vercel
+- Dados via Finnhub, Farside, CoinGecko e BTCFunk
 
 ## Arquitetura
 
 ### Frontend (Surge)
-Arquivos estáticos:
+
+Arquivos estaticos:
 - `index.html`
 - `etfs.html`
 - `corporates.html`
 - `market.html`
+- `onchain.html`
 - `settings.html`
 - `assets/styles.css`
 - `assets/app.js`
 - `data/*.json`
 
 ### Backend (Vercel)
-Funções serverless:
+
+Funcoes serverless:
+- `/api/snapshot`
+- `/api/update-daily`
 - `/api/farside-btc`
 - `/api/finnhub-batch`
 - `/api/public-companies`
 - `/api/btc-price`
+- `/api/onchain-dormant`
 
-## O que o site entrega
+## Fontes usadas
 
-### Visão geral
-- BTC spot
-- fluxo ETF do dia
-- número de companhias abertas no universo monitorado
-- BTC corporativo agregado
+- BTC spot: CoinGecko simple price API.
+- ETFs spot: Farside, via scraping da tabela publica.
+- Companhias abertas com BTC: CoinGecko Bitcoin Treasury Companies.
+- Cotacoes de ETFs/acoes: Finnhub, com `FINNHUB_API_KEY`.
+- On-chain: BTCFunk HODL Waves, sem chave paga.
 
-### Gestoras / ETFs
-- watchlist de emissores
-- fluxo diário por emissor
-- preço e variação
-- AUM e shares quando disponíveis
+Quando CoinGecko Companies nao puder ser lido ao vivo, `/api/public-companies` retorna `ok:false`, `stale:true`, `sourceMode:"fallback_seed"` e um aviso. Nesse caso, os dados de companhias devem ser tratados como base local antiga, nao como leitura atualizada.
 
-### Companhias abertas
-- watchlist de companhias
-- breadth via BitcoinTreasuries
-- preço e variação via Finnhub
-- link para investor relations
+## Configuracao
 
-### Mercado / confirmação
-- painel resumido
-- leitura operacional
-- comparação rápida de ambiente spot institucional
-
-## Configuração
-
-1. Publique as funções `api/` na Vercel.
+1. Publique a pasta `vercel_fullstack` na Vercel.
 2. Defina `FINNHUB_API_KEY` no ambiente da Vercel.
-3. Copie a URL da Vercel para `data/app-config.json`, no campo `apiBaseUrl`.
-4. Publique esta pasta completa no Surge.
+3. Opcional: configure `KV_REST_API_URL` e `KV_REST_API_TOKEN` para historico persistente global.
+4. Para frontend no mesmo dominio da Vercel, mantenha `data/app-config.json` com `apiBaseUrl` vazio.
+5. Para frontend no Surge, use o pacote `surge_frontend` e mantenha `apiBaseUrl` apontando para a URL da Vercel.
 
-## Observações
-- O frontend faz refresh automático com o intervalo definido em `data/app-config.json`.
-- Os cards comparam o valor atual com o último refresh salvo no navegador do usuário.
-- A watchlist de ETFs e companhias é editável nos JSONs da pasta `data/`.
+## Snapshot diario
 
-## Limitações práticas
-- O scraper da Farside depende da estrutura HTML pública do site.
-- O breadth de companhias depende da estrutura do BitcoinTreasuries.
-- Alguns campos de AUM/shares via Finnhub podem não vir para todos os tickers ou planos.
-- Para máxima confiabilidade, confirme eventos relevantes de companhias em IR / SEC.
+Endpoint principal: `/api/snapshot`
 
-## Ajuste aplicado para Vercel
-- Removido o campo inválido `runtime` do `vercel.json`.
-- Adicionado `engines.node: 20.x` no `package.json`.
-- Mantido `maxDuration` nas funções da pasta `api/`.
+Cron em `vercel.json`: `0 11 * * *` UTC
 
-## Atualização diária automática
+Cache padrao: 24 horas no CDN da Vercel com `stale-while-revalidate`.
 
-Esta versão usa um snapshot diário consolidado:
+Refresh manual: `/api/update-daily`
 
-- Endpoint principal: `/api/snapshot`
-- Endpoint manual de teste: `/api/update-daily`
-- Cron configurado em `vercel.json`: `0 11 * * *` UTC
-- Cache Vercel CDN: 24 horas + stale-while-revalidate
+O refresh manual chama `/api/snapshot?refresh=1`, que usa `Cache-Control: no-store` e propaga um parametro unico aos endpoints internos para evitar reaproveitar a versao cacheada do snapshot.
 
-O frontend consulta primeiro `/api/snapshot`. Se o snapshot falhar, ele tenta usar as APIs individuais como fallback.
-
-Para validar após publicar na Vercel, abra:
+## Validacao apos publicar
 
 ```txt
 https://SEU-PROJETO.vercel.app/api/snapshot
 https://SEU-PROJETO.vercel.app/api/update-daily
+https://SEU-PROJETO.vercel.app/api/public-companies
+https://SEU-PROJETO.vercel.app/api/onchain-dormant
 ```
 
+## Limitacoes praticas
 
-## Histórico diário de companhias
-
-Este pacote inclui histórico persistente para companhias abertas com BTC em tesouraria. Para funcionar de forma global no Vercel, configure `KV_REST_API_URL` e `KV_REST_API_TOKEN` no projeto. Sem KV, o painel continua funcionando, mas a comparação histórica de companhias depende de histórico local/fallback.
-
-
-## On-chain gratuito sem Bitbo
-
-A página `onchain.html` usa somente a CoinMetrics Community API gratuita (`https://community-api.coinmetrics.io/v4`). Não é necessário configurar `BITBO_API_KEY` nem `COINMETRICS_API_KEY`. Para cotações de ETFs e ações, mantenha apenas `FINNHUB_API_KEY` no Vercel.
+- Scrapers de Farside e CoinGecko dependem da estrutura HTML publica desses sites.
+- Fallbacks existem para manter a interface utilizavel, mas agora sao marcados como `stale`.
+- Alguns campos de AUM/shares via Finnhub podem nao vir para todos os tickers ou planos.
+- Para decisoes financeiras, confirme eventos relevantes em IR, SEC ou fonte primaria da companhia.

@@ -1,5 +1,5 @@
 const ETF_SYMBOLS=['IBIT','FBTC','BITB','ARKB','BTCO','EZBC','HODL','BTCW','BRRR','GBTC','BTC'];
-const COMPANY_SYMBOLS=['MSTR','MARA','TSLA','COIN','HUT','RIOT','CLSK','SQ'];
+const COMPANY_SYMBOLS=['MSTR','MARA','TSLA','COIN','HUT','RIOT','CLSK','XYZ'];
 function setCors(res){
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');

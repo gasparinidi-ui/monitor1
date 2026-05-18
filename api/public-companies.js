@@ -9,6 +9,7 @@ function setCors(res){
 
 const COINGECKO_TREASURIES_URL='https://www.coingecko.com/en/treasuries/bitcoin/companies';
 const TOP_LIMIT=30;
+const FALLBACK_WARNING='CoinGecko live parse unavailable; returning bundled fallback seed. Treat company treasury values as stale until sourceMode is coingecko_live.';
 
 const FALLBACK_TOP30=[
   {rank:1,ticker:'MSTR',company:'Strategy',btcHeld:818334,activity:'+51,364 BTC'},
@@ -134,6 +135,7 @@ export default async function handler(req,res){
     let summary={publicCompanies:174,totalBtc:1229927,latestDate:new Date().toISOString().slice(0,10),displayedCompanies:TOP_LIMIT,sourceName:'CoinGecko Bitcoin Treasury Companies',sourceUrl:COINGECKO_TREASURIES_URL};
     let baseRows=FALLBACK_TOP30;
     let sourceMode='fallback_seed';
+    let liveWarning=FALLBACK_WARNING;
     try{
       const response=await fetch(COINGECKO_TREASURIES_URL,{headers:{'user-agent':'Mozilla/5.0 BTC Spot Monitor'}});
       if(response.ok){
@@ -141,9 +143,20 @@ export default async function handler(req,res){
         const parsed=parseCoinGeckoText(html);
         const parsedSummary=parseSummary(html);
         summary={...summary,...Object.fromEntries(Object.entries(parsedSummary).filter(([,v])=>v!=null))};
-        if(parsed.length>=20){ baseRows=parsed; sourceMode='coingecko_live'; }
+        if(parsed.length>=20){
+          baseRows=parsed;
+          sourceMode='coingecko_live';
+          liveWarning=null;
+        } else {
+          liveWarning=`${FALLBACK_WARNING} Parsed only ${parsed.length} live rows.`;
+        }
+      } else {
+        liveWarning=`${FALLBACK_WARNING} CoinGecko HTTP ${response.status}.`;
       }
-    }catch(e){ console.warn('CoinGecko parse fallback:', e.message); }
+    }catch(e){
+      liveWarning=`${FALLBACK_WARNING} ${e.message}`;
+      console.warn('CoinGecko parse fallback:', e.message);
+    }
     const btcPrice=await getBtcPrice();
     const rows=buildRows(baseRows, btcPrice, summary.latestDate);
     const hist=await applyCompanyHistory(rows, summary.latestDate || new Date().toISOString().slice(0,10));
@@ -152,13 +165,32 @@ export default async function handler(req,res){
       rank:idx+1,
       officialSource:r.officialSource||COINGECKO_TREASURIES_URL
     }));
-    res.setHeader('Cache-Control','public, s-maxage=86400, stale-while-revalidate=604800');
-    return res.status(200).json({ok:true,summary,rows:finalRows,historyMeta:hist.historyMeta,source:`${summary.sourceName} + histórico persistente`,sourceMode});
+    res.setHeader('Cache-Control',sourceMode==='coingecko_live' ? 'public, s-maxage=86400, stale-while-revalidate=604800' : 'public, s-maxage=3600, stale-while-revalidate=86400');
+    return res.status(200).json({
+      ok:sourceMode==='coingecko_live',
+      stale:sourceMode!=='coingecko_live',
+      warning:liveWarning || undefined,
+      summary,
+      rows:finalRows,
+      historyMeta:hist.historyMeta,
+      source:`${summary.sourceName} + historico persistente`,
+      sourceMode
+    });
   }catch(error){
     const date=new Date().toISOString().slice(0,10);
     const btcPrice=await getBtcPrice();
     const rows=buildRows(FALLBACK_TOP30, btcPrice, date);
     const hist=await applyCompanyHistory(rows, date);
-    return res.status(200).json({ok:true,warning:error.message,summary:{publicCompanies:174,totalBtc:1229927,latestDate:date,displayedCompanies:TOP_LIMIT,sourceName:'CoinGecko fallback seed',sourceUrl:COINGECKO_TREASURIES_URL},rows:hist.rows,historyMeta:hist.historyMeta,source:'CoinGecko fallback seed + histórico persistente'});
+    res.setHeader('Cache-Control','public, s-maxage=3600, stale-while-revalidate=86400');
+    return res.status(200).json({
+      ok:false,
+      stale:true,
+      warning:`${FALLBACK_WARNING} ${error.message}`,
+      summary:{publicCompanies:174,totalBtc:1229927,latestDate:date,displayedCompanies:TOP_LIMIT,sourceName:'CoinGecko fallback seed',sourceUrl:COINGECKO_TREASURIES_URL},
+      rows:hist.rows,
+      historyMeta:hist.historyMeta,
+      source:'CoinGecko fallback seed + historico persistente',
+      sourceMode:'fallback_seed'
+    });
   }
 }
