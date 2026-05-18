@@ -321,6 +321,36 @@ function cellOnchain(entry, years){
   if(!r) return '<strong>N/D</strong><span class="sub">sem historico</span>';
   return `<strong>${fmtBtc(r.dormantSupply,0)}</strong><span class="sub">${fmtPercent(r.dormantPct,2)} da oferta</span>`;
 }
+function exclusiveLabel(min,max){
+  if(min===0 && max===1) return 'Ate 1 ano';
+  if(max==null) return `${min} anos ou mais`;
+  return `Entre ${min} e ${max} anos`;
+}
+function ageBandsFromOnchain(data){
+  if(Array.isArray(data?.ageBands) && data.ageBands.length) return data.ageBands;
+  const cumulative=[...(data?.rows||[])]
+    .filter(r=>numOrNull(r.years)!==null && numOrNull(r.dormantSupply)!==null)
+    .sort((a,b)=>Number(a.years)-Number(b.years));
+  if(!cumulative.length || numOrNull(data?.currentSupply)===null) return [];
+  const total=Number(data.currentSupply);
+  const result=[];
+  const first=cumulative[0];
+  if(Number(first.years)===1){
+    const btcInBand=total-Number(first.dormantSupply);
+    result.push({minYears:0,maxYears:1,bucket:'Ate 1 ano',btcInBand,pctOfSupply:btcInBand/total*100,currentSupply:total,metric:first.metric});
+  }
+  for(let i=0;i<cumulative.length;i++){
+    const current=cumulative[i];
+    const next=cumulative[i+1];
+    const min=Number(current.years);
+    const max=next ? Number(next.years) : null;
+    const btcInBand=next ? Number(current.dormantSupply)-Number(next.dormantSupply) : Number(current.dormantSupply);
+    if(Number.isFinite(btcInBand) && btcInBand>=0){
+      result.push({minYears:min,maxYears:max,bucket:exclusiveLabel(min,max),btcInBand,pctOfSupply:btcInBand/total*100,currentSupply:total,metric:current.metric});
+    }
+  }
+  return result;
+}
 async function renderOnchain(config){
   const snap=await getDailySnapshot(config);
   const data=snap?.data?.onchainDormant || await safeProvider(config,'/api/onchain-dormant',{ok:false,rows:[],source:'BTCFunk HODL Waves'});
@@ -345,6 +375,9 @@ async function renderOnchain(config){
   const yearsList=[...new Set(rows.map(r=>Number(r.years)).filter(Boolean))].sort((a,b)=>a-b);
   const historyBody=yearsList.map(y=>`<tr><td><span class="operator">${y}+ anos</span><span class="sub">nao movimentados</span></td><td class="num">${cellOnchain(todayEntry,y)}</td><td class="num">${cellOnchain(yesterdayEntry,y)}</td><td class="num">${cellOnchain(beforeYesterdayEntry,y)}</td></tr>`).join('');
   setHtml('onchain-history-body',historyBody||'<tr><td colspan="4">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
-  const body=rows.map(r=>`<tr><td>${esc(r.bucket||'N/D')}</td><td class="num">${fmtBtc(r.dormantSupply,0)}</td><td class="num">${fmtPercent(r.dormantPct,2)}</td><td class="num">${fmtBtc(r.activeSupply,0)}</td><td class="num">${fmtBtc(r.currentSupply,0)}</td><td>${esc(r.metric||'N/D')}</td></tr>`).join('');
-  setHtml('onchain-dormant-body',body||'<tr><td colspan="6">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
+  const ageBands=ageBandsFromOnchain(data);
+  const totalAgeBands=ageBands.reduce((acc,r)=>acc+(numOrNull(r.btcInBand)||0),0);
+  const body=ageBands.map(r=>`<tr><td>${esc(r.bucket||'N/D')}</td><td class="num">${fmtBtc(r.btcInBand,0)}</td><td class="num">${fmtPercent(r.pctOfSupply,2)}</td><td class="num">${fmtBtc(r.currentSupply,0)}</td><td>${esc(r.metric||'N/D')}</td></tr>`).join('');
+  const totalRow=ageBands.length ? `<tr><td><strong>Total minerado na leitura</strong></td><td class="num"><strong>${fmtBtc(totalAgeBands,0)}</strong></td><td class="num"><strong>${fmtPercent(totalAgeBands/(numOrNull(data?.currentSupply)||totalAgeBands)*100,2)}</strong></td><td class="num"><strong>${fmtBtc(data?.currentSupply,0)}</strong></td><td>${esc(data?.source||'BTCFunk HODL Waves')}</td></tr>` : '';
+  setHtml('onchain-dormant-body',body+totalRow||'<tr><td colspan="5">Sem dados on-chain. Verifique /api/onchain-dormant.</td></tr>');
 }
