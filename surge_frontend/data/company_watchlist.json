@@ -1,0 +1,182 @@
+[
+  {
+    "ticker": "MSTR",
+    "company": "Strategy",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "XXI",
+    "company": "XXI",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "3350.T",
+    "company": "Metaplanet",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "MARA",
+    "company": "MARA Holdings",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "CEPO",
+    "company": "Bitcoin Standard Treasury Company",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "GLXY",
+    "company": "Galaxy Digital Holdings Ltd",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "BLSH",
+    "company": "Bullish",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "RIOT",
+    "company": "Riot Platforms",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "COIN",
+    "company": "Coinbase Global",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "ASST",
+    "company": "Strive",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "HUT",
+    "company": "Hut 8 Mining Corp",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "CLSK",
+    "company": "CleanSpark",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "TSLA",
+    "company": "Tesla",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "DJT",
+    "company": "Trump Media & Technology Group Corp.",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "XYZ",
+    "company": "Block",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "GDC",
+    "company": "GD Culture Group",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "ABTC",
+    "company": "American Bitcoin",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "NXTT",
+    "company": "Next Technology Holding",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "BRR",
+    "company": "ProCap BTC",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "NAKA",
+    "company": "Nakamoto Inc (formerly KindlyMD)",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "GEMI",
+    "company": "Gemini Space Station",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "434.HK",
+    "company": "Boyaa Interactive International Limited",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "OBTC3.SA",
+    "company": "OranjeBTC",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "ADE.DE",
+    "company": "Bitcoin Group SE",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "EMPD",
+    "company": "Empery Digital",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "ALCPB.PA",
+    "company": "Capital B",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "SWC.AQ",
+    "company": "The Smarter Web Company PLC",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "DEFI.NE",
+    "company": "DeFi Technologies",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "DDC",
+    "company": "DDC Enterprise Limited",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  },
+  {
+    "ticker": "HOLO",
+    "company": "Microcloud Hologram",
+    "bucket": "Top 30 public companies by BTC treasury",
+    "officialSource": "https://www.coingecko.com/en/treasuries/bitcoin/companies"
+  }
+]

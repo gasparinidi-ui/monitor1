@@ -1,0 +1,17 @@
+﻿PUBLICACAO VERCEL - Bitcoin Big Holders Monitor
+
+Pasta para publicar:
+vercel_fullstack
+
+Este pacote contem frontend + pasta api + vercel.json + package.json.
+
+Comandos sugeridos, dentro desta pasta:
+npm install
+vercel
+
+Configuracao:
+O arquivo data/app-config.json esta com apiBaseUrl vazio para usar as APIs do mesmo dominio da Vercel.
+Se quiser apontar para outro backend, preencha apiBaseUrl com a URL base desejada.
+
+Variaveis:
+Confira .env.example e configure as variaveis necessarias no painel da Vercel.
