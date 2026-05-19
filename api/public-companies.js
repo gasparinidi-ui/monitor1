@@ -9,6 +9,7 @@ function setCors(res){
 
 const COINGECKO_TREASURIES_URL='https://www.coingecko.com/en/treasuries/bitcoin/companies';
 const TOP_LIMIT=30;
+const OVERRIDES_PATH=new URL('../data/company_overrides.json', import.meta.url);
 
 const FALLBACK_TOP30=[
   {rank:1,ticker:'MSTR',company:'Strategy',btcHeld:818334,activity:'+51,364 BTC'},
@@ -110,6 +111,33 @@ async function getBtcPrice(){
     return j?.bitcoin?.usd ?? null;
   }catch{return null;}
 }
+async function loadOverrides(){
+  try{
+    const fs=await import('fs/promises');
+    const txt=await fs.readFile(OVERRIDES_PATH,'utf8');
+    const rows=JSON.parse(txt);
+    return Array.isArray(rows) ? rows : [];
+  }catch(e){
+    console.warn('Company overrides load skipped:', e.message);
+    return [];
+  }
+}
+function applyOverrides(baseRows, overrides){
+  const rows=[...(baseRows||[])];
+  let totalDelta=0;
+  for(const override of overrides||[]){
+    if(!override?.ticker || num(override.btcHeld)===null) continue;
+    const ticker=normalizeTicker(override.ticker);
+    const idx=rows.findIndex(r=>normalizeTicker(r.ticker)===ticker);
+    const before=idx>=0 ? num(rows[idx].btcHeld) : null;
+    const merged={...(idx>=0 ? rows[idx] : {}),...override,ticker,btcHeld:num(override.btcHeld)};
+    if(idx>=0) rows[idx]=merged;
+    else rows.push(merged);
+    if(before!==null) totalDelta += num(override.btcHeld)-before;
+    else totalDelta += num(override.btcHeld);
+  }
+  return {rows,totalDelta};
+}
 function buildRows(baseRows, btcPrice, date){
   return (baseRows||[])
     .filter(r=>r && r.ticker && num(r.btcHeld)!==null)
@@ -123,8 +151,12 @@ function buildRows(baseRows, btcPrice, date){
       btcHeld:num(r.btcHeld),
       valueUsd: btcPrice ? num(r.btcHeld)*btcPrice : null,
       activity30d:r.activity||null,
-      lastDisclosureDate:date,
-      officialSource:COINGECKO_TREASURIES_URL
+      lastDisclosureDate:r.lastDisclosureDate||date,
+      previousBtcHeld:num(r.previousBtcHeld),
+      previousDisclosureDate:r.previousDisclosureDate||null,
+      thirdBtcHeld:num(r.thirdBtcHeld),
+      thirdDisclosureDate:r.thirdDisclosureDate||null,
+      officialSource:r.officialSource||COINGECKO_TREASURIES_URL
     }));
 }
 export default async function handler(req,res){
@@ -144,7 +176,11 @@ export default async function handler(req,res){
         if(parsed.length>=20){ baseRows=parsed; sourceMode='coingecko_live'; }
       }
     }catch(e){ console.warn('CoinGecko parse fallback:', e.message); }
-    const btcPrice=await getBtcPrice();
+    const [btcPrice,overrides]=await Promise.all([getBtcPrice(),loadOverrides()]);
+    const overridden=applyOverrides(baseRows,overrides);
+    baseRows=overridden.rows;
+    if(num(summary.totalBtc)!==null) summary.totalBtc=num(summary.totalBtc)+overridden.totalDelta;
+    summary.latestDate=overrides.reduce((latest,o)=>String(o.lastDisclosureDate||'')>String(latest||'')?o.lastDisclosureDate:latest, summary.latestDate);
     const rows=buildRows(baseRows, btcPrice, summary.latestDate);
     const hist=await applyCompanyHistory(rows, summary.latestDate || new Date().toISOString().slice(0,10));
     const finalRows=(hist.rows||[]).sort((a,b)=>(num(b.btcHeld)||0)-(num(a.btcHeld)||0)).slice(0,TOP_LIMIT).map((r,idx)=>({

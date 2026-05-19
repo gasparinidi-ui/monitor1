@@ -135,8 +135,8 @@ export async function applyCompanyHistory(rows, date=todayIso()){
     return {
       ...r,
       lastDisclosureDate:currentDate,
-      previousDisclosureDate:prev?.date||null,
-      previousBtcHeld:prev?.value??null
+      previousDisclosureDate:r.previousDisclosureDate||prev?.date||null,
+      previousBtcHeld:r.previousBtcHeld??prev?.value??null
     };
   });
   return {rows:enriched,history:updated,historyMeta:{...persist,entries:updated.length,key:HISTORY_KEY}};

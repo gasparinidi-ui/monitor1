@@ -1,0 +1,14 @@
+[
+  {
+    "ticker": "MSTR",
+    "company": "Strategy",
+    "btcHeld": 843738,
+    "lastDisclosureDate": "2026-05-17",
+    "previousBtcHeld": 818869,
+    "previousDisclosureDate": "2026-05-10",
+    "activity": "+24,869 BTC",
+    "officialSource": "https://br.investing.com/news/cryptocurrency-news/strategy-investe-us-2-bilhoes-em-bitcoin-em-semana-de-compras-agressivas-1942917",
+    "sourceName": "Investing.com / SEC Form 8-K reported update",
+    "note": "Strategy acquired 24,869 BTC between 2026-05-11 and 2026-05-17, bringing total holdings to 843,738 BTC as of 2026-05-17."
+  }
+]
